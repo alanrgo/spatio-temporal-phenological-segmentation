@@ -199,8 +199,8 @@ def create_distributions_over_pixel_classes(labels):
 
     w, h = labels.shape
 
-    for i in xrange(0, w):
-        for j in xrange(0, h):
+    for i in range(0, w):
+        for j in range(0, h):
             if labels[i, j] == 1:
                 train_class_distribution[labels[i, j]-1].append((i, j))
             elif labels[i, j] == 2:
@@ -208,9 +208,9 @@ def create_distributions_over_pixel_classes(labels):
             elif labels[i, j] == 3:
                 test_class_distribution[labels[i, j]-2].append((i, j))
 
-    for i in xrange(len(train_class_distribution)):
+    for i in range(len(train_class_distribution)):
         print(BatchColors.OKBLUE + "Class " + str(i) + " = " + str(len(train_class_distribution[i])) + BatchColors.ENDC)
-    for i in xrange(len(test_class_distribution)):
+    for i in range(len(test_class_distribution)):
         print(BatchColors.OKBLUE + "Class " + str(i) + " = " + str(len(test_class_distribution[i])) + BatchColors.ENDC)
 
     return np.asarray(train_class_distribution[0] + train_class_distribution[1]), \
