@@ -181,9 +181,9 @@ def load_images(path, specie_type, operation, crop_size):
 
     try:
         if operation == 'generate_pred_images':
-            img = scipy.misc.imread(path + "Mask/whole_mask_int.png")
+            img = io.imread(path + "Mask/whole_mask_int.png")
         else:
-            img = scipy.misc.imread(path + "Mask/" + specie_type + "_mask_int_balanced.png")  # _balanced2
+            img = io.imread(path + "Mask/" + specie_type + "_mask_int_balanced.png")  # _balanced2
     except IOError:
         print(BatchColors.FAIL + "Could not open file: " + path + "Mask/" + specie_type + "_mask_int.png" + BatchColors.ENDC)
         return
