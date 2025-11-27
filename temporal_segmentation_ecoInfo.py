@@ -62,8 +62,8 @@ def select_batch(shuffle, batch_size, it, total_size):
 def normalize_images(patches, mean_full, std_full):
     # warnings.filterwarnings('error')
 
-    for i in xrange(len(patches)):
-        for j in xrange(39):
+    for i in range(len(patches)):
+        for j in range(39):
             patches[i, :, :, :, j] = np.subtract(patches[i, :, :, :, j], mean_full[i, j])
             patches[i, :, :, :, j] = np.divide(patches[i, :, :, :, j], (std_full[i, j] if std_full[i, j] != 0.0 else 1.0))
 
@@ -76,13 +76,13 @@ def compute_image_mean(data):
 
 
 def calculate_mean_and_std(data, indexes, crop_size):
-    mean_full = [[[] for i in range(0)] for i in xrange(len(data))]
-    std_full = [[[] for i in range(0)] for i in xrange(len(data))]
+    mean_full = [[[] for i in range(0)] for i in range(len(data))]
+    std_full = [[[] for i in range(0)] for i in range(len(data))]
     mask = int(crop_size / 2)
 
-    for img_num in xrange(len(data)):
+    for img_num in range(len(data)):
         all_patches = []
-        for i in xrange(len(indexes)):
+        for i in range(len(indexes)):
             cur_x = indexes[i][0]
             cur_y = indexes[i][1]
 
