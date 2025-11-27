@@ -1,6 +1,7 @@
 import random
 import sys
 import os
+import skimage.io as io
 import math
 import datetime
 from PIL import Image
@@ -53,7 +54,8 @@ def select_batch(shuffle, batch_size, it, total_size):
 
 def manipulate_border_array(data, crop_size):
     mask = int(crop_size / 2)
-    # print data.shape
+    print(data.shape)
+    print(mask)
 
     h, w = len(data), len(data[0])
     crop_left = data[0:h, 0:crop_size, :]
@@ -144,10 +146,10 @@ def calculate_mean_and_std(data, indexes, crop_size):
 def load_images(path,  crop_size, instances):
     data = []
     mask = []
-
     for name in instances:
         try:
-            img = img_as_float(scipy.misc.imread(os.path.join(path, name)))
+            print(os.path.join(path, name))
+            img = img_as_float(io.imread(os.path.join(path, name)))
         except IOError:
             print(BatchColors.FAIL + "Could not open file: ", path + name + BatchColors.ENDC)
 
