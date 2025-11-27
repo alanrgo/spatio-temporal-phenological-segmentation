@@ -10,6 +10,7 @@ import tensorflow as tf
 import scipy.misc
 from skimage import img_as_float
 from sklearn.metrics import f1_score
+import skimage.io as io
 
 # from tensorflow.python.framework import ops
 
@@ -28,10 +29,10 @@ class BatchColors:
 
 
 def print_params(list_params):
-    print '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
-    for i in xrange(1, len(sys.argv)):
-        print list_params[i - 1] + '= ' + sys.argv[i]
-    print '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
+    print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    for i in range(1, len(sys.argv)):
+        print(list_params[i - 1] + '= ' + sys.argv[i])
+    print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
 
 
 def memory_usage_psutil():
@@ -88,44 +89,44 @@ def calculate_mean_and_std(data, indexes, crop_size):
             patches = data[img_num, (cur_x + mask) - mask:(cur_x + mask) + mask + 1,
                            (cur_y + mask) - mask:(cur_y + mask) + mask + 1, :]
             if len(patches) != crop_size or len(patches[0]) != crop_size:
-                print BatchColors.FAIL + "Error! Current patch size: " + str(len(patches)) + "x" + \
-                      str(len(patches[0])) + BatchColors.ENDC
+                print(BatchColors.FAIL + "Error! Current patch size: " + str(len(patches)) + "x" + \
+                      str(len(patches[0])) + BatchColors.ENDC)
                 return
 
             all_patches.append(patches)
 
         mean, std = compute_image_mean(np.asarray(all_patches))
-        # print mean.shape, std.shape
+        # print(mean.shape, std.shape)
         mean_full[img_num].append(mean)
         std_full[img_num].append(std)
 
-    # print mean_full, std_full
+    # print(mean_full, std_full)
     return np.squeeze(np.asarray(mean_full)), np.squeeze(np.asarray(std_full))
 
 
 def manipulate_border_array(data, crop_size):
     mask = int(crop_size / 2)
-    # print data.shape
+    # print(data.shape)
 
     h, w = len(data), len(data[0])
-    # print h, w
+    # print(h, w)
     crop_left = data[0:h, 0:crop_size, :]
     crop_right = data[0:h, w - crop_size:w, :]
     crop_top = data[0:crop_size, 0:w, :]
     crop_bottom = data[h - crop_size:h, 0:w, :]
-    # print crop_left.shape, crop_right.shape, crop_top.shape, crop_bottom.shape
+    # print(crop_left.shape, crop_right.shape, crop_top.shape, crop_bottom.shape)
 
     mirror_left = np.fliplr(crop_left)
     mirror_right = np.fliplr(crop_right)
     flipped_top = np.flipud(crop_top)
     flipped_bottom = np.flipud(crop_bottom)
-    # print mirror_left.shape, mirror_right.shape, flipped_top.shape, flipped_bottom.shape
+    # print(mirror_left.shape, mirror_right.shape, flipped_top.shape, flipped_bottom.shape)
 
     h_new, w_new = h + mask * 2, w + mask * 2
     data_border = np.zeros((h_new, w_new, len(data[0][0])))
-    # print data_border.shape
+    # print(data_border.shape)
     data_border[mask:h + mask, mask:w + mask, :] = data
-    # print h_new, w_new, data_border.shape
+    # print(h_new, w_new, data_border.shape)
 
     data_border[mask:h + mask, 0:mask, :] = mirror_left[:, mask + 1:, :]
     data_border[mask:h + mask, w_new - mask:w_new, :] = mirror_right[:, 0:mask, :]
@@ -145,25 +146,25 @@ def load_images(path, specie_type, operation, crop_size):
     mask = int(crop_size / 2)
 
     data = []
-    day = np.zeros((960+(mask*2), 1280+(mask*2), 3 * 13), dtype=np.float)
+    day = np.zeros((960+(mask*2), 1280+(mask*2), 3 * 13), dtype=np.float64)
 
     old_img_num = 242
 
-    for f in sorted(listdir(path + "Imagens")):
+    for f in sorted(listdir(path + "images")):
         try:
-            img = img_as_float(scipy.misc.imread(path + "Imagens/" + f))
-            # print f, img.shape
+            img = img_as_float(io.imread(os.path.join(path,'images', f)))
+            # print(f, img.shape)
         except IOError:
-            print BatchColors.FAIL + "Could not open file: ", path + "Images/" + f + BatchColors.ENDC
+            print(BatchColors.FAIL + "Could not open file: ", path + "Images/" + f + BatchColors.ENDC)
             return
 
-        # print(memory_usage_psutil())
+        # print(memory_usage_psutil()))
         year, img_num, hour, stamp = f[:-4].split('_')
         if old_img_num != int(img_num):
-            # print 'new day', f
+            # print('new day', f)
             data.append(day)
-            # print 'data', np.asarray(data).shape
-            day = np.zeros((960 + mask * 2, 1280 + mask * 2, 3 * 13), dtype=np.float)
+            # print('data', np.asarray(data).shape)
+            day = np.zeros((960 + mask * 2, 1280 + mask * 2, 3 * 13), dtype=np.float64)
             old_img_num = int(img_num)
 
         if int(stamp) == 1:
@@ -171,7 +172,7 @@ def load_images(path, specie_type, operation, crop_size):
         '''else:
         hour_5img = np.concatenate((hour_5img, img), axis=2)
         if int(stamp) == 5:
-            # print 'new img', hour_5img.shape
+            # print('new img', hour_5img.shape)
             day.append(hour_5img)
             hour_5img = []'''
 
@@ -184,7 +185,7 @@ def load_images(path, specie_type, operation, crop_size):
         else:
             img = scipy.misc.imread(path + "Mask/" + specie_type + "_mask_int_balanced.png")  # _balanced2
     except IOError:
-        print BatchColors.FAIL + "Could not open file: " + path + "Mask/" + specie_type + "_mask_int.png" + BatchColors.ENDC
+        print(BatchColors.FAIL + "Could not open file: " + path + "Mask/" + specie_type + "_mask_int.png" + BatchColors.ENDC)
         return
 
     mask = img
@@ -208,9 +209,9 @@ def create_distributions_over_pixel_classes(labels):
                 test_class_distribution[labels[i, j]-2].append((i, j))
 
     for i in xrange(len(train_class_distribution)):
-        print BatchColors.OKBLUE + "Class " + str(i) + " = " + str(len(train_class_distribution[i])) + BatchColors.ENDC
+        print(BatchColors.OKBLUE + "Class " + str(i) + " = " + str(len(train_class_distribution[i])) + BatchColors.ENDC)
     for i in xrange(len(test_class_distribution)):
-        print BatchColors.OKBLUE + "Class " + str(i) + " = " + str(len(test_class_distribution[i])) + BatchColors.ENDC
+        print(BatchColors.OKBLUE + "Class " + str(i) + " = " + str(len(test_class_distribution[i])) + BatchColors.ENDC)
 
     return np.asarray(train_class_distribution[0] + train_class_distribution[1]), \
            np.asarray(test_class_distribution[0] + test_class_distribution[1])
@@ -240,10 +241,10 @@ def dynamically_create_patches(data, mask_data, crop_size, class_distribution, s
                          else mask_data[cur_x, cur_y]-2)
 
         if len(patch[0]) != crop_size or len(patch[1]) != crop_size:
-            print "Error: Current patch size ", len(patch), len(patch[0])
+            print("Error: Current patch size ", len(patch), len(patch[0]))
             return
         if current_class != 0 and current_class != 1 and current_class != 2 and current_class != 3 and current_class != 4:
-            print "Error: Current class is mistaken", current_class
+            print("Error: Current class is mistaken", current_class)
             return
 
         if i < len(class_distribution):
@@ -476,11 +477,11 @@ def train(data, labels, train_class_distribution, test_class_distribution,
     with tf.Session() as sess:
         if 'model' in model_path:
             current_iter = int(model_path.split('-')[-1])
-            print BatchColors.OKBLUE + 'Model restored from ' + model_path + BatchColors.ENDC
+            print( BatchColors.OKBLUE + 'Model restored from ' + model_path + BatchColors.ENDC)
             saver_restore.restore(sess, model_path)
         else:
             sess.run(init)
-            print BatchColors.OKBLUE + 'Model totally initialized!' + BatchColors.ENDC
+            print( BatchColors.OKBLUE + 'Model totally initialized!' + BatchColors.ENDC)
 
         # aux variables
         it = 0
@@ -489,7 +490,7 @@ def train(data, labels, train_class_distribution, test_class_distribution,
         batch_cm_train = np.zeros((NUM_CLASSES, NUM_CLASSES), dtype=np.uint32)
 
         # Keep training until reach max iterations
-        for step in xrange(current_iter, niter + 1):
+        for step in range(current_iter, niter + 1):
             shuffle, batch, it = select_batch(shuffle, batch_size, it, 3 * len(train_class_distribution))
 
             b_x, batch_y = dynamically_create_patches(data, labels, crop_size, train_class_distribution, batch)
@@ -528,7 +529,7 @@ def train(data, labels, train_class_distribution, test_class_distribution,
 
             if step % epoch_number == 0:
                 _sum = 0.0
-                for i in xrange(len(epoch_cm_train)):
+                for i in range(len(epoch_cm_train)):
                     _sum += (epoch_cm_train[i][i] / float(np.sum(epoch_cm_train[i])) if np.sum(
                         epoch_cm_train[i]) != 0 else 0)
 
@@ -548,7 +549,7 @@ def train(data, labels, train_class_distribution, test_class_distribution,
                          mean_full, std_full, n_input_data, batch_size, x, y, keep_prob,  # keep_prob_connection,
                          is_training, pred, acc_mean, step)
 
-        print BatchColors.OKGREEN + "Optimization Finished!" + BatchColors.ENDC
+        print( BatchColors.OKGREEN + "Optimization Finished!" + BatchColors.ENDC)
 
         # Test: Final
         saver.save(sess, output_path + 'model', global_step=step)
@@ -566,7 +567,7 @@ def test(data, labels, test_class_distribution, mean_full, std_full,
 
     # Launch the graph
     with tf.Session() as sess:
-        print BatchColors.OKBLUE + 'Model restored from ' + model_path + BatchColors.ENDC
+        print( BatchColors.OKBLUE + 'Model restored from ' + model_path + BatchColors.ENDC)
         saver_restore.restore(sess, model_path)
 
         validate(sess, data, labels, test_class_distribution, crop_size,
@@ -587,7 +588,7 @@ def generate_pred_images(data, labels, test_class_distribution, mean_full, std_f
 
     w, h = labels.shape
     mask = np.zeros((w, h, 2), dtype=np.float)
-    print mask.shape
+    print( mask.shape)
 
     # Add ops to save and restore all the variables.
     saver_restore = tf.train.Saver()
@@ -595,7 +596,7 @@ def generate_pred_images(data, labels, test_class_distribution, mean_full, std_f
 
     # Launch the graph
     with tf.Session() as sess:
-        print BatchColors.OKBLUE + 'Model restored from ' + model_path + BatchColors.ENDC
+        print( BatchColors.OKBLUE + 'Model restored from ' + model_path + BatchColors.ENDC)
         saver_restore.restore(sess, model_path)
 
         total = len(test_class_distribution)
@@ -658,23 +659,23 @@ def main():
     index = index + 1
     operation = sys.argv[index]
 
-    print BatchColors.OKBLUE + 'Reading images...' + BatchColors.ENDC
+    print( BatchColors.OKBLUE + 'Reading images...' + BatchColors.ENDC)
     data, labels = load_images(input_path, specie_type, operation, crop_size)
-    print data.shape, labels.shape
+    print( data.shape, labels.shape)
 
-    print BatchColors.OKBLUE + 'Creating class distribution...' + BatchColors.ENDC
+    print( BatchColors.OKBLUE + 'Creating class distribution...' + BatchColors.ENDC)
     train_class_distribution, test_class_distribution = create_distributions_over_pixel_classes(labels)
 
     if os.path.isfile(output_path + 'mean.npy'):
         mean_full = np.squeeze(np.load(output_path + 'mean.npy'))
         std_full = np.squeeze(np.load(output_path + 'std.npy'))
-        print BatchColors.OKGREEN + 'Loaded Mean/Std from training instances' + BatchColors.ENDC
+        print( BatchColors.OKGREEN + 'Loaded Mean/Std from training instances' + BatchColors.ENDC)
     else:
         mean_full, std_full = calculate_mean_and_std(data, train_class_distribution, crop_size)
         np.save(output_path + 'mean.npy', mean_full)
         np.save(output_path + 'std.npy', std_full)
-        print BatchColors.OKGREEN + 'Created Mean/Std from training instances' + BatchColors.ENDC
-    print mean_full.shape, std_full.shape
+        print( BatchColors.OKGREEN + 'Created Mean/Std from training instances' + BatchColors.ENDC)
+    print( mean_full.shape, std_full.shape)
 
     # Network Parameters
     n_input_data = crop_size * crop_size * 13*3  # 13 timestamps * RGB
@@ -720,7 +721,7 @@ def main():
                              crop_size, batch_size, model_path, x, y, keep_prob,
                              is_training, n_input_data, logits, output_path, specie_type)
     else:
-        print BatchColors.FAIL + "Operation not found: " + operation + BatchColors.ENDC
+        print( BatchColors.FAIL + "Operation not found: " + operation + BatchColors.ENDC)
 
 
 if __name__ == "__main__":
