@@ -6,13 +6,15 @@ import os
 import warnings
 import datetime
 import numpy as np
-import tensorflow.compat.v1 as tf
+import tensorflow as tf
 import scipy.misc
 from skimage import img_as_float
 from sklearn.metrics import f1_score
 import skimage.io as io
 
 # from tensorflow.python.framework import ops
+tf.compat.v1.disable_v2_behavior()
+
 
 NUM_CLASSES = 2
 
