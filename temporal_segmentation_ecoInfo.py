@@ -6,7 +6,7 @@ import os
 import warnings
 import datetime
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import scipy.misc
 from skimage import img_as_float
 from sklearn.metrics import f1_score
