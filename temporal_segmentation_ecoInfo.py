@@ -12,12 +12,7 @@ from skimage import img_as_float
 from sklearn.metrics import f1_score
 import skimage.io as io
 
-# from tensorflow.python.framework import ops
-tf.compat.v1.disable_v2_behavior()
-
-
 NUM_CLASSES = 2
-
 
 class BatchColors:
     HEADER = '\033[95m'
@@ -686,12 +681,16 @@ def main():
     # dropout_connection = 1.0 # (1/13.0)
 
     # tf Graph input_data
-    x = tf.placeholder(tf.float32, [data.shape[0], None, n_input_data], name='ph_data')
-    y = tf.placeholder(tf.int32, [None], name='ph_labels')
+    x = tf.compat.v1.placeholder(tf.float32, [data.shape[0], None, n_input_data], name='ph_data')
+    y = tf.compat.v1.placeholder(tf.int32, [None], name='ph_labels')
+    # x = tf.placeholder(tf.float32, [data.shape[0], None, n_input_data], name='ph_data')
+    # y = tf.placeholder(tf.int32, [None], name='ph_labels')
 
-    keep_prob = tf.placeholder(tf.float32)  # dropout (keep probability)
+    # keep_prob = tf.placeholder(tf.float32)  # dropout (keep probability)
+    keep_prob = tf.compat.v1.placeholder(tf.float32)  # dropout (keep probability)
     # keep_prob_connection = tf.placeholder(tf.float32)
-    is_training = tf.placeholder(tf.bool, [], name='is_training')
+    is_training = tf.compat.v1.placeholder(tf.bool, [], name='is_training')
+    # is_training = tf.placeholder(tf.bool, [], name='is_training')
     global_step = tf.Variable(0, name='global_step', trainable=False)
 
     # CONVNET
