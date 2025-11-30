@@ -45,7 +45,7 @@ def memory_usage_psutil():
 def select_batch(shuffle, batch_size, it, total_size):
     batch = shuffle[it:min(it + batch_size, total_size)]
     if min(it + batch_size, total_size) == total_size or total_size == it + batch_size:
-        shuffle = np.asarray(random.sample(xrange(total_size), total_size))
+        shuffle = np.asarray(random.sample(range(total_size), total_size))
         # print "in", shuffle
         it = 0
         if len(batch) < batch_size:
@@ -349,7 +349,7 @@ def convnet_initial(x, dropout, is_training, weight_decay, crop_size, name_prefi
 def convnet_25_temporal(x, dropout, is_training, crop_size, weight_decay, inputs):
     pools = []
 
-    for i in xrange(inputs):
+    for i in range(inputs):
         pools.append(convnet_initial(x[i], dropout, is_training, weight_decay, crop_size, 'time_' + str(i)))
 
     # conv1 = _conv_layer(x, [4, 4, 3, 64], 'ft_conv1', weight_decay, is_training, pad='VALID')
@@ -439,7 +439,7 @@ def validate(sess, data, labels, test_distribution, crop_size,
             cm_test[by[j]][preds_val[j]] += 1
 
     _sum = 0.0
-    for i in xrange(len(cm_test)):
+    for i in range(len(cm_test)):
         _sum += (cm_test[i][i] / float(np.sum(cm_test[i])) if np.sum(cm_test[i]) != 0 else 0)
 
     print("---- Iter " + str(step) + " -- Validate: Overall Accuracy= " + str(int(true_count)) +
@@ -471,7 +471,7 @@ def train(data, labels, train_class_distribution, test_class_distribution,
 
     # Initializing the variables
     init = tf.initialize_all_variables()
-    shuffle = np.asarray(random.sample(xrange(3 * len(train_class_distribution)), 3 * len(train_class_distribution)))
+    shuffle = np.asarray(random.sample(range(3 * len(train_class_distribution)), 3 * len(train_class_distribution)))
 
     # Launch the graph
     with tf.Session() as sess:
@@ -514,7 +514,7 @@ def train(data, labels, train_class_distribution, test_class_distribution,
                     batch_cm_train[batch_y[j]][batch_predcs[j]] += 1
 
                 _sum = 0.0
-                for i in xrange(len(batch_cm_train)):
+                for i in range(len(batch_cm_train)):
                     _sum += (batch_cm_train[i][i] / float(np.sum(batch_cm_train[i])) if np.sum(
                         batch_cm_train[i]) != 0 else 0)
 
@@ -609,7 +609,7 @@ def generate_pred_images(data, labels, test_class_distribution, mean_full, std_f
             bx = np.reshape(bx, (39, -1, n_input_data))
 
             _softmax = sess.run(softmax, feed_dict={x: bx, y: by, keep_prob: 1., is_training: False})
-            for j in xrange(len(_softmax)):
+            for j in range(len(_softmax)):
                 # print _softmax[j]
                 mask[int(test_class_distribution[j][0]), int(test_class_distribution[j][1]), :] = _softmax[j]
                 # color_mask(_softmax[j])
