@@ -33,8 +33,7 @@ if not hasattr(tf, 'add_to_collection'):
 if not hasattr(tf, 'get_collection'):
     tf.get_collection = tf.compat.v1.get_collection
 # Expose the v1 train module as tf.train so tf.train.Saver etc. resolve.
-if not hasattr(tf, 'train'):
-    tf.train = tf.compat.v1.train
+tf.train = tf.compat.v1.train
 # initialize_all_variables / global_variables_initializer helpers
 if not hasattr(tf, 'initialize_all_variables'):
     tf.initialize_all_variables = tf.compat.v1.initialize_all_variables
