@@ -13,6 +13,18 @@ from sklearn.metrics import f1_score
 import skimage.io as io
 
 tf.compat.v1.disable_eager_execution()
+tf.compat.v1.disable_v2_behavior()
+
+# Provide TF1-style aliases so code written against tf.* (TF1) works without
+# changing the entire codebase to tf.compat.v1.* everywhere.
+if not hasattr(tf, 'variable_scope'):
+    tf.variable_scope = tf.compat.v1.variable_scope
+if not hasattr(tf, 'get_variable'):
+    tf.get_variable = tf.compat.v1.get_variable
+if not hasattr(tf, 'Session'):
+    tf.Session = tf.compat.v1.Session
+if not hasattr(tf, 'placeholder'):
+    tf.placeholder = tf.compat.v1.placeholder
 
 NUM_CLASSES = 2
 
@@ -276,8 +288,8 @@ def _variable_on_cpu(name, shape, ini):
 
 def _variable_with_weight_decay(name, shape, ini, weight_decay):
     var = _variable_on_cpu(name, shape, ini)
-    # tf.compat.v1.contrib.layers.xavier_initializer_conv2d(dtype=tf.float32)
-    # tf.compat.v1.contrib.layers.xavier_initializer(dtype=tf.float32))
+    # tf.contrib.layers.xavier_initializer_conv2d(dtype=tf.float32)
+    # tf.contrib.layers.xavier_initializer(dtype=tf.float32))
     # tf.truncated_normal_initializer(stddev=stddev, dtype=tf.float32))
     # orthogonal_initializer()
     if weight_decay is not None:
@@ -292,9 +304,9 @@ def _variable_with_weight_decay(name, shape, ini, weight_decay):
 def _batch_norm(input_data, is_training, scope=None):
     # Note: is_training is tf.placeholder(tf.bool) type
     return tf.cond(is_training,
-                   lambda: tf.compat.v1.contrib.layers.batch_norm(input_data, is_training=True, center=False, updates_collections=None,
+                   lambda: tf.compat.v1.layers.batch_normalization(input_data, is_training=True, center=False, updates_collections=None,
                                                         scope=scope),
-                   lambda: tf.compat.v1.contrib.layers.batch_norm(input_data, is_training=False, center=False,
+                   lambda: tf.compat.v1.layers.batch_normalization(input_data, is_training=False, center=False,
                                                         updates_collections=None, scope=scope, reuse=True)
                    )
 
@@ -303,9 +315,9 @@ def _conv_layer(input_data, layer_shape, name, weight_decay, is_training, rate=1
                 activation='relu', has_batch_norm=True, has_activation=True, is_normal_conv=False):
     if strides is None:
         strides = [1, 1, 1, 1]
-    with tf.compat.v1.variable_scope(name) as scope:
+    with tf.variable_scope(name) as scope:
         weights = _variable_with_weight_decay('weights', shape=layer_shape,
-                                              ini=tf.compat.v1.contrib.layers.xavier_initializer_conv2d(dtype=tf.float32),
+                                              ini=tf.keras.initializers.GlorotUniform(),
                                               weight_decay=weight_decay)
         biases = _variable_on_cpu('biases', layer_shape[-1], tf.constant_initializer(0.1))
 
@@ -369,19 +381,19 @@ def convnet_25_temporal(x, dropout, is_training, crop_size, weight_decay, inputs
                         is_training, pad='VALID', is_normal_conv=True, activation='lrelu')
     pool3 = _max_pool(conv3, kernel=[1, 2, 2, 1], strides=[1, 1, 1, 1], name='ft_pool3', pad='VALID')
 
-    with tf.compat.v1.variable_scope('ft_fc1') as scope:
+    with tf.variable_scope('ft_fc1') as scope:
         reshape = tf.reshape(pool3, [-1, 1 * 1 * 256])
         weights = _variable_with_weight_decay('weights', shape=[1 * 1 * 256, 1024],
-                                              ini=tf.compat.v1.contrib.layers.xavier_initializer(dtype=tf.float32),
+                                              ini=tf.keras.initializers.GlorotUniform(),
                                               weight_decay=weight_decay)
         biases = _variable_on_cpu('biases', [1024], tf.constant_initializer(0.1))
         drop_fc1 = tf.nn.dropout(reshape, dropout)
         fc1 = tf.nn.relu(_batch_norm(tf.add(tf.matmul(drop_fc1, weights), biases), is_training, scope=scope.name))
 
     # Fully connected layer 2
-    with tf.compat.v1.variable_scope('ft_fc2') as scope:
+    with tf.variable_scope('ft_fc2') as scope:
         weights = _variable_with_weight_decay('weights', shape=[1024, 1024],
-                                              ini=tf.compat.v1.contrib.layers.xavier_initializer(dtype=tf.float32),
+                                              ini=tf.keras.initializers.GlorotUniform(),
                                               weight_decay=weight_decay)
         biases = _variable_on_cpu('biases', [1024], tf.constant_initializer(0.1))
 
@@ -389,9 +401,9 @@ def convnet_25_temporal(x, dropout, is_training, crop_size, weight_decay, inputs
         drop_fc2 = tf.nn.dropout(fc1, dropout)
         fc2 = tf.nn.relu(_batch_norm(tf.add(tf.matmul(drop_fc2, weights), biases), is_training, scope=scope.name))
 
-    with tf.compat.v1.variable_scope('fc3_logits') as scope:
+    with tf.variable_scope('fc3_logits') as scope:
         weights = _variable_with_weight_decay('weights', [1024, NUM_CLASSES],
-                                              ini=tf.compat.v1.contrib.layers.xavier_initializer(dtype=tf.float32),
+                                              ini=tf.keras.initializers.GlorotUniform(),
                                               weight_decay=weight_decay)
         biases = _variable_on_cpu('biases', [NUM_CLASSES], tf.constant_initializer(0.1))
         logits = tf.add(tf.matmul(fc2, weights), biases, name=scope.name)
@@ -683,15 +695,15 @@ def main():
     # dropout_connection = 1.0 # (1/13.0)
 
     # tf Graph input_data
-    x = tf.compat.v1.placeholder(tf.float32, [data.shape[0], None, n_input_data], name='ph_data')
-    y = tf.compat.v1.placeholder(tf.int32, [None], name='ph_labels')
+    x = tf.placeholder(tf.float32, [data.shape[0], None, n_input_data], name='ph_data')
+    y = tf.placeholder(tf.int32, [None], name='ph_labels')
     # x = tf.placeholder(tf.float32, [data.shape[0], None, n_input_data], name='ph_data')
     # y = tf.placeholder(tf.int32, [None], name='ph_labels')
 
     # keep_prob = tf.placeholder(tf.float32)  # dropout (keep probability)
-    keep_prob = tf.compat.v1.placeholder(tf.float32)  # dropout (keep probability)
+    keep_prob = tf.placeholder(tf.float32)  # dropout (keep probability)
     # keep_prob_connection = tf.placeholder(tf.float32)
-    is_training = tf.compat.v1.placeholder(tf.bool, [], name='is_training')
+    is_training = tf.placeholder(tf.bool, [], name='is_training')
     # is_training = tf.placeholder(tf.bool, [], name='is_training')
     global_step = tf.Variable(0, name='global_step', trainable=False)
 
