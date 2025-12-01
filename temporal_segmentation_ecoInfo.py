@@ -303,7 +303,7 @@ def _conv_layer(input_data, layer_shape, name, weight_decay, is_training, rate=1
                 activation='relu', has_batch_norm=True, has_activation=True, is_normal_conv=False):
     if strides is None:
         strides = [1, 1, 1, 1]
-    with tf.variable_scope(name) as scope:
+    with tf.compat.v1.variable_scope(name) as scope:
         weights = _variable_with_weight_decay('weights', shape=layer_shape,
                                               ini=tf.contrib.layers.xavier_initializer_conv2d(dtype=tf.float32),
                                               weight_decay=weight_decay)
@@ -369,7 +369,7 @@ def convnet_25_temporal(x, dropout, is_training, crop_size, weight_decay, inputs
                         is_training, pad='VALID', is_normal_conv=True, activation='lrelu')
     pool3 = _max_pool(conv3, kernel=[1, 2, 2, 1], strides=[1, 1, 1, 1], name='ft_pool3', pad='VALID')
 
-    with tf.variable_scope('ft_fc1') as scope:
+    with tf.compat.v1.variable_scope('ft_fc1') as scope:
         reshape = tf.reshape(pool3, [-1, 1 * 1 * 256])
         weights = _variable_with_weight_decay('weights', shape=[1 * 1 * 256, 1024],
                                               ini=tf.contrib.layers.xavier_initializer(dtype=tf.float32),
@@ -379,7 +379,7 @@ def convnet_25_temporal(x, dropout, is_training, crop_size, weight_decay, inputs
         fc1 = tf.nn.relu(_batch_norm(tf.add(tf.matmul(drop_fc1, weights), biases), is_training, scope=scope.name))
 
     # Fully connected layer 2
-    with tf.variable_scope('ft_fc2') as scope:
+    with tf.compat.v1.variable_scope('ft_fc2') as scope:
         weights = _variable_with_weight_decay('weights', shape=[1024, 1024],
                                               ini=tf.contrib.layers.xavier_initializer(dtype=tf.float32),
                                               weight_decay=weight_decay)
@@ -389,7 +389,7 @@ def convnet_25_temporal(x, dropout, is_training, crop_size, weight_decay, inputs
         drop_fc2 = tf.nn.dropout(fc1, dropout)
         fc2 = tf.nn.relu(_batch_norm(tf.add(tf.matmul(drop_fc2, weights), biases), is_training, scope=scope.name))
 
-    with tf.variable_scope('fc3_logits') as scope:
+    with tf.compat.v1.variable_scope('fc3_logits') as scope:
         weights = _variable_with_weight_decay('weights', [1024, NUM_CLASSES],
                                               ini=tf.contrib.layers.xavier_initializer(dtype=tf.float32),
                                               weight_decay=weight_decay)
