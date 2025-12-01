@@ -26,6 +26,21 @@ if not hasattr(tf, 'Session'):
 if not hasattr(tf, 'placeholder'):
     tf.placeholder = tf.compat.v1.placeholder
 
+# Add aliases for collection and train APIs used by the script so calls like
+# tf.add_to_collection, tf.get_collection, tf.train.Saver, etc. work.
+if not hasattr(tf, 'add_to_collection'):
+    tf.add_to_collection = tf.compat.v1.add_to_collection
+if not hasattr(tf, 'get_collection'):
+    tf.get_collection = tf.compat.v1.get_collection
+# Expose the v1 train module as tf.train so tf.train.Saver etc. resolve.
+if not hasattr(tf, 'train'):
+    tf.train = tf.compat.v1.train
+# initialize_all_variables / global_variables_initializer helpers
+if not hasattr(tf, 'initialize_all_variables'):
+    tf.initialize_all_variables = tf.compat.v1.initialize_all_variables
+if not hasattr(tf, 'global_variables_initializer'):
+    tf.global_variables_initializer = tf.compat.v1.global_variables_initializer
+
 NUM_CLASSES = 2
 
 class BatchColors:
