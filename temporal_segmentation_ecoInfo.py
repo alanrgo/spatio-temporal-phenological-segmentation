@@ -731,7 +731,7 @@ def main():
     optimizer = tf.train.MomentumOptimizer(learning_rate=lr, momentum=0.9).minimize(loss, global_step=global_step)
 
     # Evaluate model
-    correct = tf.nn.in_top_k(tf.cast(logits, tf.float32), tf.cast(y, tf.float32), 1)
+    correct = tf.nn.in_top_k(tf.cast(logits, tf.float32), y, 1)
     acc_mean = tf.reduce_sum(tf.cast(correct, tf.int32))
     pred = tf.argmax(logits, 1)
 
