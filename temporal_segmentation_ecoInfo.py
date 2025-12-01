@@ -735,7 +735,7 @@ def main():
     print(y.dtype)
     print(y.shape)
     # Evaluate model
-    correct = tf.nn.in_top_k(logits, y, 1)
+    correct = tf.nn.in_top_k(predictions=logits, targets=y, k=1)
     acc_mean = tf.reduce_sum(tf.cast(correct, tf.int32))
     pred = tf.argmax(logits, 1)
 
