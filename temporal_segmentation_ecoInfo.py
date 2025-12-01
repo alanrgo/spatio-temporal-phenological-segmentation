@@ -15,6 +15,13 @@ import skimage.io as io
 tf.compat.v1.disable_eager_execution()
 tf.compat.v1.disable_v2_behavior()
 
+# Check availability
+gpus = tf.config.list_physical_devices('GPU')
+print("GPUs:", gpus)
+
+# Fail if no GPU
+assert len(gpus) > 0, "❌ No GPU detected! Training would run on CPU."
+
 # Provide TF1-style aliases so code written against tf.* (TF1) works without
 # changing the entire codebase to tf.compat.v1.* everywhere.
 if not hasattr(tf, 'variable_scope'):
