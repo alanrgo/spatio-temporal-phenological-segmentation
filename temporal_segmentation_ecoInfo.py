@@ -730,6 +730,10 @@ def main():
 
     optimizer = tf.train.MomentumOptimizer(learning_rate=lr, momentum=0.9).minimize(loss, global_step=global_step)
 
+    print(logits.dtype)
+    print(logits.shape)
+    print(y.dtype)
+    print(y.shape)
     # Evaluate model
     correct = tf.nn.in_top_k(tf.cast(logits, tf.float32), y, 1)
     acc_mean = tf.reduce_sum(tf.cast(correct, tf.int32))
