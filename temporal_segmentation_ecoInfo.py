@@ -319,9 +319,9 @@ def _variable_with_weight_decay(name, shape, ini, weight_decay):
 def _batch_norm(input_data, is_training, scope=None):
     # Note: is_training is tf.placeholder(tf.bool) type
     return tf.cond(is_training,
-                   lambda: tf.compat.v1.layers.batch_normalization(input_data, is_training=True, center=False, updates_collections=None,
+                   lambda: tf.compat.v1.layers.batch_normalization(input_data, training=True, center=False, updates_collections=None,
                                                         scope=scope),
-                   lambda: tf.compat.v1.layers.batch_normalization(input_data, is_training=False, center=False,
+                   lambda: tf.compat.v1.layers.batch_normalization(input_data, training=False, center=False,
                                                         updates_collections=None, scope=scope, reuse=True)
                    )
 
