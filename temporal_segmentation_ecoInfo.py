@@ -12,6 +12,8 @@ from skimage import img_as_float
 from sklearn.metrics import f1_score
 import skimage.io as io
 
+tf.compat.v1.disable_eager_execution()
+
 NUM_CLASSES = 2
 
 class BatchColors:
