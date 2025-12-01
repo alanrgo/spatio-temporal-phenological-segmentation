@@ -320,8 +320,8 @@ def _batch_norm(input_data, is_training, scope=None):
     # Note: is_training is tf.placeholder(tf.bool) type
     return tf.cond(is_training,
                    lambda: tf.compat.v1.layers.batch_normalization(input_data, training=True, center=False,
-                                                        scope=scope),
-                   lambda: tf.compat.v1.layers.batch_normalization(input_data, training=False, center=False, scope=scope, reuse=True)
+                                                        name=scope),
+                   lambda: tf.compat.v1.layers.batch_normalization(input_data, training=False, center=False, name=scope, reuse=True)
                    )
 
 
