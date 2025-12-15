@@ -182,16 +182,16 @@ def load_images(path, specie_type, operation, crop_size):
 
     old_img_num = 242
 
-    for f in sorted(listdir(path + "images")):
+    for f in sorted(listdir(path + "images/1")):
+        full_path = os.path.join(path,'images/1', f)
         try:
-            img = img_as_float(io.imread(os.path.join(path,'images', f)))
-            # print(f, img.shape)
+            img = img_as_float(io.imread(full_path))
         except IOError:
-            print(BatchColors.FAIL + "Could not open file: ", path + "Images/" + f + BatchColors.ENDC)
+            print(BatchColors.FAIL + "Could not open file: ", full_path + BatchColors.ENDC)
             return
 
         # print(memory_usage_psutil()))
-        year, img_num, hour, stamp = f[:-4].split('_')
+        year, img_num, hour = f[:-4].split('_')
         if old_img_num != int(img_num):
             # print('new day', f)
             data.append(day)
@@ -199,8 +199,8 @@ def load_images(path, specie_type, operation, crop_size):
             day = np.zeros((960 + mask * 2, 1280 + mask * 2, 3 * 13), dtype=np.float64)
             old_img_num = int(img_num)
 
-        if int(stamp) == 1:
-            day[:, :, (int(hour) - 6) * 3:((int(hour) - 6) * 3) + 3] = manipulate_border_array(img, crop_size)
+
+        day[:, :, (int(hour) - 6) * 3:((int(hour) - 6) * 3) + 3] = manipulate_border_array(img, crop_size)
         '''else:
         hour_5img = np.concatenate((hour_5img, img), axis=2)
         if int(stamp) == 5:

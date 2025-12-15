@@ -25,3 +25,7 @@ If you use this code in your research, please consider citing:
         year = {2019},
         publisher={IEEE}
     }
+
+### Setup 
+
+`bash setup.sh`
