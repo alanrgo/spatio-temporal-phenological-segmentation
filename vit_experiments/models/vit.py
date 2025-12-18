@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+
 
 class PatchEmbedding(nn.Module):
     def __init__(self, feature_dim, seq_len, in_channels, embed_dim, arrgmnt = 'rgbrgb', region_size = 5, dimension_order = 'TR'):

@@ -1,3 +1,6 @@
+base: "../setup_base_vit.yaml"
+extends: "setup_common_training.yaml"
+
 experiment_name: "adam_no-norm-rgb_rgbrgb_5_RT" 
 custom_setup: 
   arrangement: "rgbrgb" 
