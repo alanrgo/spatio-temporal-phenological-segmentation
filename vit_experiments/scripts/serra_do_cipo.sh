@@ -1,0 +1,2 @@
+# !/bin/bash
+python3 ./vit_experiments/train_v2.py --dataset serra_do_cipo --input_path '/home/alangomes/data/Dados_serra_cipo/Dados_serra_cipó' --setup_path './vit_experiments/setups/serra_do_cipo' --output '/home/alangomes/data/Dados_serra_cipo/Dados_serra_cipó/output_vit_experiments'

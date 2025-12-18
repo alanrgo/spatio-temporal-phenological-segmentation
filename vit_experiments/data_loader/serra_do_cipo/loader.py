@@ -4,9 +4,8 @@ import json
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
 
-def load_raw_data():
-    # GOOGLE_DRIVE_PATH_TO_SAVE_FILE= 'Projeto Pesquisa/Dados/Dados_serra_cipó'
-  PATH_TO_READ_FILE = '/home/alangomes/data/Dados_serra_cipo/Dados_serra_cipó'
+def load_raw_data(path = None):
+  PATH_TO_READ_FILE = path
 
   # Define the file path in your Google Drive
   output_file = os.path.join(PATH_TO_READ_FILE, 'data.txt')
