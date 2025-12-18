@@ -1,0 +1,7 @@
+experiment_name: "adamw_no-norm-rgb_rgbrgb_5_RT" 
+custom_setup: 
+  arrangement: "rgbrgb" 
+  optimizer: "adamw" 
+  normalized_rgb: False 
+  region: 5 
+  sequence_order: "RT"

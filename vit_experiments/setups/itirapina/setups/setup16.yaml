@@ -1,0 +1,8 @@
+# setup16.yaml
+experiment_name: "adamw_norm-rgb_rrggbb_9_RT"
+custom_setup:
+  arrangement: "rrggbb"
+  optimizer: "adamw"
+  normalized_rgb: True
+  region: 9
+  sequence_order: "RT"

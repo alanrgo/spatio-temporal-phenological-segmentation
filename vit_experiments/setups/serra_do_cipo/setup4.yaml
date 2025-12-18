@@ -1,0 +1,8 @@
+# setup4.yaml
+experiment_name: "adam_no-norm-rgb_rgbrgb_9_RT"
+custom_setup:
+  arrangement: "rgbrgb"
+  optimizer: "adam"
+  normalized_rgb: False
+  region: 9
+  sequence_order: "RT"

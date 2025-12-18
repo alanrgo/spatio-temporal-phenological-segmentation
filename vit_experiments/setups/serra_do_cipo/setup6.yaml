@@ -1,0 +1,8 @@
+# setup6.yaml
+experiment_name: "adam_no-norm-rgb_rrggbb_5_RT"
+custom_setup:
+  arrangement: "rrggbb"
+  optimizer: "adam"
+  normalized_rgb: False
+  region: 5
+  sequence_order: "RT"

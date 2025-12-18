@@ -1,0 +1,8 @@
+# setup3.yaml
+experiment_name: "adam_no-norm-rgb_rgbrgb_8_TR"
+custom_setup:
+  arrangement: "rgbrgb"
+  optimizer: "adam"
+  normalized_rgb: False
+  region: 8
+  sequence_order: "TR"

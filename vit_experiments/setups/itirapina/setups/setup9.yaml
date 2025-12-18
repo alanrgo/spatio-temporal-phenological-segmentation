@@ -1,0 +1,8 @@
+# setup9.yaml
+experiment_name: "adamw_norm-rgb_rgbrgb_5_TR"
+custom_setup:
+  arrangement: "rgbrgb"
+  optimizer: "adamw"
+  normalized_rgb: True
+  region: 5
+  sequence_order: "TR"
