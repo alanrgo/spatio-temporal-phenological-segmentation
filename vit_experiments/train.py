@@ -10,20 +10,40 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 import json
 from sklearn.model_selection import train_test_split
+from utils.vit_setup_loader import load_config
+import yaml
+from models.vit import VisionTransformer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(device)
+loaded_config = load_config('./vit_experiments/setups/serra_do_cipo/setup1.yaml')
+print(loaded_config)
 
-# # Instantiate model
-# model = VisionTransformer(
-#     FEATURE_DIM, SEQ_LEN, CHANNELS, NUM_CLASSES,
-#     EMBED_DIM, DEPTH, NUM_HEADS, MLP_DIM, DROP_RATE,
-#     REGION_SIZE, FEATURE_ARRANGEMENT, DATA_STRUCTURE
-# ).to(device)
+REGION_SIZE = loaded_config['custom_setup']['region']
+SEQUENCE_ORDER = loaded_config['custom_setup']['sequence_order']
+FEATURE_ARRANGEMENT = loaded_config['custom_setup']['arrangement']
 
-# # Loss and optimizer
-# criterion = nn.CrossEntropyLoss()
-# optimizer = optim.AdamW(model.parameters(), lr=LEARNING_RATE)
+SEQ_LEN = loaded_config['training']['seq_len']
+FEATURE_DIM = REGION_SIZE * 3 if SEQUENCE_ORDER == 'TR' else 3 * SEQ_LEN
+NUM_CLASSES = loaded_config['training']['num_classes']
+
+CHANNELS = loaded_config['model']['channels']
+NUM_HEADS = loaded_config['model']['num_heads']
+EMBED_DIM = loaded_config['model']['embed_dim']
+DEPTH = loaded_config['model']['depth']
+MLP_DIM = loaded_config['model']['mlp']
+DROP_RATE = loaded_config['model']['drop_rate']
+LEARNING_RATE = float(loaded_config['training']['learning_rate'])
+
+# Instantiate model
+model = VisionTransformer(
+    FEATURE_DIM, SEQ_LEN, CHANNELS, NUM_CLASSES,
+    EMBED_DIM, DEPTH, NUM_HEADS, MLP_DIM, DROP_RATE,
+    REGION_SIZE, FEATURE_ARRANGEMENT, SEQUENCE_ORDER
+).to(device)
+
+# Loss and optimizer
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.AdamW(model.parameters(), lr=LEARNING_RATE)
 
 # # Training loop
 # def train(model, loader, optimizer, criterion):
