@@ -4,8 +4,8 @@ import json
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
 
-def loader():
-  # GOOGLE_DRIVE_PATH_TO_SAVE_FILE= 'Projeto Pesquisa/Dados/Dados_serra_cipó'
+def load_raw_data():
+    # GOOGLE_DRIVE_PATH_TO_SAVE_FILE= 'Projeto Pesquisa/Dados/Dados_serra_cipó'
   PATH_TO_READ_FILE = '/home/alangomes/data/Dados_serra_cipo/Dados_serra_cipó'
 
   # Define the file path in your Google Drive
@@ -15,8 +15,10 @@ def loader():
   with open(output_file, 'r') as f:
       data = json.load(f)
 
-  print("Data loaded successfully:")
+  print("Data loaded successfully")
+  return data
 
+def load_sc_data(data):
   full_data = []
   Y = []
 
@@ -151,20 +153,23 @@ def loader():
   y_np = Y.numpy()
 
   # Divide o conjunto de treino em treino (80%) e validação (20%)
-  X_train, X_val, y_train, y_val = train_test_split(
+  X_train, X_val, Y_train, Y_val = train_test_split(
       X_np, y_np, test_size=0.2, stratify=y_np, random_state=42
   )
 
   # Converte de volta para tensores
   X_train = torch.tensor(X_train, dtype=full_data.dtype)
   X_val = torch.tensor(X_val, dtype=full_data.dtype)
-  y_train = torch.tensor(y_train, dtype=Y.dtype)
-  y_val = torch.tensor(y_val, dtype=Y.dtype)
+  Y_train = torch.tensor(Y_train, dtype=Y.dtype)
+  Y_val = torch.tensor(Y_val, dtype=Y.dtype)
 
+  return X_train, Y_train, X_val, Y_val, full_data_test, Y_test
+
+def create_loaders(X_train, Y_train, X_val, Y_val, X_test, Y_test):
   # Cria datasets
-  train_dataset = TensorDataset(X_train, y_train)
-  val_dataset = TensorDataset(X_val, y_val)
-  dataset_test = TensorDataset(full_data_test, Y_test)
+  train_dataset = TensorDataset(X_train, Y_train)
+  val_dataset = TensorDataset(X_val, Y_val)
+  dataset_test = TensorDataset(X_test, Y_test)
 
   # Cria DataLoaders
   train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)

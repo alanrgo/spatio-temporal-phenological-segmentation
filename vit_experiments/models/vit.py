@@ -4,13 +4,14 @@ import torch.nn.functional as F
 
 
 class PatchEmbedding(nn.Module):
-    def __init__(self, feature_dim, seq_len, in_channels, embed_dim, arrgmnt = 'rgbrgb', region_size = 5, dimension_order = 'TR'):
+    def __init__(self, feature_dim, seq_len, in_channels, embed_dim, arrgmnt = 'rgbrgb', region_size = 5, dimension_order = 'TR', normalized_rgb = False):
         super().__init__()
         self.seq_len = seq_len
         self.dimension_order = dimension_order
         self.in_channels = in_channels
         self.region_size = region_size
         self.arrgmnt = arrgmnt
+        self.normalized_rgb = normalized_rgb
         self.dimension_order = dimension_order
         self.proj = nn.Linear(feature_dim, embed_dim)
         self.cls_token = nn.Parameter(torch.randn(1, 1, embed_dim))
@@ -21,6 +22,7 @@ class PatchEmbedding(nn.Module):
     def forward(self, x):
         B = x.size(0)
         x = self.filter_region(x)
+        x = self.normalize_rgb(x) if self.normalized_rgb else x
         x = self.define_dimension_order(x)
         x = self.get_feature_arrangement(x)
         x = self.proj(x)
@@ -58,6 +60,18 @@ class PatchEmbedding(nn.Module):
       if self.dimension_order == 'RT':
         x = x.permute(0, 2, 1, 3)
       return x
+    
+    def normalize_rgb(self, x):
+        """
+        x: Tensor of shape [B, T, R, 3]
+        """
+        eps=1e-8
+        # Sum over RGB channels
+        rgb_sum = x.sum(dim=-1, keepdim=True)
+        # Normalize
+        x_norm = x / (rgb_sum + eps)
+
+        return x_norm
 
 class MLP(nn.Module):
     def __init__(self, in_features, hidden_features, drop_rate):
@@ -85,9 +99,9 @@ class TransformerEncoderLayer(nn.Module):
         return x
     
 class VisionTransformer(nn.Module):
-    def __init__(self, feature_dim, seq_len, in_channels, num_classes, embed_dim, depth, num_heads, mlp_dim, drop_rate, region_size, feat_arrgmnt, data_structure):
+    def __init__(self, feature_dim, seq_len, in_channels, num_classes, embed_dim, depth, num_heads, mlp_dim, drop_rate, region_size, feat_arrgmnt, data_structure, normalized_rgb):
         super().__init__()
-        self.patch_embed = PatchEmbedding(feature_dim, seq_len, in_channels, embed_dim, feat_arrgmnt, region_size, data_structure)
+        self.patch_embed = PatchEmbedding(feature_dim, seq_len, in_channels, embed_dim, feat_arrgmnt, region_size, data_structure, normalized_rgb)
         self.encoder = nn.Sequential(*[
             TransformerEncoderLayer(embed_dim, num_heads, mlp_dim, drop_rate)
             for _ in range(depth)
