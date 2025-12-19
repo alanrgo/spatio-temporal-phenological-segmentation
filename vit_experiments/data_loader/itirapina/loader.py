@@ -1,27 +1,12 @@
 import torch
-def load_itirapina_data(data):
+from sklearn.model_selection import train_test_split
+from torch.utils.data import DataLoader, TensorDataset
+
+def load_itirapina_data(data, dict_class_to_index, dict_test_masks):
     full_data = []
     Y = []
     full_data_test = []
     Y_test = []
-
-    dict_class_to_index = {
-        "A.tomentosum": 0,
-        "C.brasiliensis": 1,
-        "M.guianensis": 2,
-        "M.rubiginosa": 3,
-        "P.ramiflora": 4,
-        "P.torta": 5
-    }
-
-    dict_test_masks = {
-        "A.tomentosum_11.pgm": 1,
-        "A.tomentosum_7.pgm": 1,
-        "M.rubiginosa_34.pgm": 1,
-        "M.rubiginosa_4.pgm:": 1,
-        "P.torta_9.pgm": 1,
-        "P.ramiflora_10.pgm": 1
-    }
 
     dict_mask_ignore = { # Comment the masks that will be used
     # "A.tomentosum_11.pgm": 1,
@@ -124,3 +109,19 @@ def load_itirapina_data(data):
     Y = torch.stack(Y)
     full_data_test = torch.stack(full_data_test)
     Y_test = torch.stack(Y_test)
+
+    # Converte para numpy (necessário para usar train_test_split)
+    X_np = full_data.numpy()
+    y_np = Y.numpy()
+    # Divide o conjunto de treino em treino (80%) e validação (20%)
+    X_train, X_val, Y_train, Y_val = train_test_split(
+        X_np, y_np, test_size=0.2, stratify=y_np, random_state=42
+    )
+
+    # Converte de volta para tensores
+    X_train = torch.tensor(X_train, dtype=full_data.dtype)
+    X_val = torch.tensor(X_val, dtype=full_data.dtype)
+    Y_train = torch.tensor(Y_train, dtype=Y.dtype)
+    Y_val = torch.tensor(Y_val, dtype=Y.dtype)
+    
+    return X_train, X_val, Y_train, Y_val, full_data_test, Y_test

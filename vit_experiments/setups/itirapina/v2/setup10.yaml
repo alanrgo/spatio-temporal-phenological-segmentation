@@ -1,0 +1,11 @@
+# setup10.yaml
+base: "../../setup_base_vit.yaml"
+extends: "setup_common_training.yaml"
+
+experiment_name: "adamw_norm-rgb_rgbrgb_5_RT"
+custom_setup:
+  arrangement: "rgbrgb"
+  optimizer: "adamw"
+  normalized_rgb: True
+  region: 5
+  sequence_order: "RT"
