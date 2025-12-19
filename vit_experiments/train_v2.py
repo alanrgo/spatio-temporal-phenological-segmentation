@@ -11,7 +11,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from utils.create_output_folder import create_folder_if_needed
-from utils.visualize_serra_cipo import generate_and_save_visualizations
+from utils.visualize_serra_cipo import generate_and_save_visualizations_itirapina
 from utils.evaluate import evaluate
 from utils.metrics import save_metrics
 
@@ -203,12 +203,17 @@ for setup in setup_list:
     model.eval() # Set the model to evaluation mode
     print(f"Loaded best model weights from {best_model_test_path}")
 
-    # generate_and_save_visualizations(
-    #     data, 
-    #     Y_test, 
-    #     model, 
-    #     test_loader, 
-    #     device, 
-    #     input_path, 
-    #     output_path
-    # )
+    output_path = os.path.join(output_path, EXPERIMENT_NAME)
+    generate_and_save_visualizations_itirapina(
+        data, 
+        Y_test, 
+        model, 
+        test_loader, 
+        device, 
+        input_path, 
+        output_path,
+        train_accuracies,
+        test_accuracies,
+        masks_dict 
+    )
+    break

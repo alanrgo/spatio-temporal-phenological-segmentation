@@ -40,6 +40,8 @@ for setup in list(setup_list):
     EXPERIMENT_NAME = loaded_config['experiment_name']
     folder_path = os.path.join(PATH_OUTPUTFILE, EXPERIMENT_NAME)
     if os.path.exists(folder_path):
+        print(f"Skipping experiment {EXPERIMENT_NAME} because it seems to be done already.")
+        print(f"Delete folder {EXPERIMENT_NAME} in case you need to run experiment again.")
         continue
 
     REGION_SIZE = loaded_config['custom_setup']['region']

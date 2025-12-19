@@ -2,10 +2,10 @@
 base: "../setup_base_vit.yaml"
 extends: "setup_common_training.yaml"
 
-experiment_name: "adam_no-norm-rgb_rgbrgb_8_TR"
+experiment_name: "adam_no-norm-rgb_rgbrgb_9_TR"
 custom_setup:
   arrangement: "rgbrgb"
   optimizer: "adam"
   normalized_rgb: False
-  region: 8
+  region: 9
   sequence_order: "TR"
