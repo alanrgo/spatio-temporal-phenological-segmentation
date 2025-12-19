@@ -1,3 +1,4 @@
+
 import random
 import sys
 import math
@@ -10,44 +11,8 @@ import tensorflow as tf
 import scipy.misc
 from skimage import img_as_float
 from sklearn.metrics import f1_score
-import skimage.io as io
 
-tf.compat.v1.disable_eager_execution()
-tf.compat.v1.disable_v2_behavior()
-
-# Check availability
-gpus = tf.config.list_physical_devices('GPU')
-print("GPUs:", gpus)
-
-# Fail if no GPU
-assert len(gpus) > 0, "❌ No GPU detected! Training would run on CPU."
-
-# Provide TF1-style aliases so code written against tf.* (TF1) works without
-# changing the entire codebase to tf.compat.v1.* everywhere.
-if not hasattr(tf, 'variable_scope'):
-    tf.variable_scope = tf.compat.v1.variable_scope
-if not hasattr(tf, 'get_variable'):
-    tf.get_variable = tf.compat.v1.get_variable
-if not hasattr(tf, 'Session'):
-    tf.Session = tf.compat.v1.Session
-if not hasattr(tf, 'placeholder'):
-    tf.placeholder = tf.compat.v1.placeholder
-
-# Add aliases for collection and train APIs used by the script so calls like
-# tf.add_to_collection, tf.get_collection, tf.train.Saver, etc. work.
-if not hasattr(tf, 'add_to_collection'):
-    tf.add_to_collection = tf.compat.v1.add_to_collection
-if not hasattr(tf, 'get_collection'):
-    tf.get_collection = tf.compat.v1.get_collection
-# Expose the v1 train module as tf.train so tf.train.Saver etc. resolve.
-tf.train = tf.compat.v1.train
-# initialize_all_variables / global_variables_initializer helpers
-if not hasattr(tf, 'initialize_all_variables'):
-    tf.initialize_all_variables = tf.compat.v1.initialize_all_variables
-if not hasattr(tf, 'global_variables_initializer'):
-    tf.global_variables_initializer = tf.compat.v1.global_variables_initializer
-
-NUM_CLASSES = 2
+NUM_CLASSES = 6
 
 class BatchColors:
     HEADER = '\033[95m'
@@ -128,37 +93,37 @@ def calculate_mean_and_std(data, indexes, crop_size):
             all_patches.append(patches)
 
         mean, std = compute_image_mean(np.asarray(all_patches))
-        # print(mean.shape, std.shape)
+        # print mean.shape, std.shape
         mean_full[img_num].append(mean)
         std_full[img_num].append(std)
 
-    # print(mean_full, std_full)
+    # print mean_full, std_full
     return np.squeeze(np.asarray(mean_full)), np.squeeze(np.asarray(std_full))
 
 
 def manipulate_border_array(data, crop_size):
     mask = int(crop_size / 2)
-    # print(data.shape)
+    # print data.shape
 
     h, w = len(data), len(data[0])
-    # print(h, w)
+    # print h, w
     crop_left = data[0:h, 0:crop_size, :]
     crop_right = data[0:h, w - crop_size:w, :]
     crop_top = data[0:crop_size, 0:w, :]
     crop_bottom = data[h - crop_size:h, 0:w, :]
-    # print(crop_left.shape, crop_right.shape, crop_top.shape, crop_bottom.shape)
+    # print crop_left.shape, crop_right.shape, crop_top.shape, crop_bottom.shape
 
     mirror_left = np.fliplr(crop_left)
     mirror_right = np.fliplr(crop_right)
     flipped_top = np.flipud(crop_top)
     flipped_bottom = np.flipud(crop_bottom)
-    # print(mirror_left.shape, mirror_right.shape, flipped_top.shape, flipped_bottom.shape)
+    # print mirror_left.shape, mirror_right.shape, flipped_top.shape, flipped_bottom.shape
 
     h_new, w_new = h + mask * 2, w + mask * 2
     data_border = np.zeros((h_new, w_new, len(data[0][0])))
-    # print(data_border.shape)
+    # print data_border.shape
     data_border[mask:h + mask, mask:w + mask, :] = data
-    # print(h_new, w_new, data_border.shape)
+    # print h_new, w_new, data_border.shape
 
     data_border[mask:h + mask, 0:mask, :] = mirror_left[:, mask + 1:, :]
     data_border[mask:h + mask, w_new - mask:w_new, :] = mirror_right[:, 0:mask, :]
@@ -178,14 +143,15 @@ def load_images(path, specie_type, operation, crop_size):
     mask = int(crop_size / 2)
 
     data = []
-    day = np.zeros((960+(mask*2), 1280+(mask*2), 3 * 13), dtype=np.float64)
+    day = np.zeros((960+(mask*2), 1280+(mask*2), 3 * 13), dtype=np.float)
 
     old_img_num = 242
 
     for f in sorted(listdir(path + "images/1")):
         full_path = os.path.join(path,'images/1', f)
         try:
-            img = img_as_float(io.imread(full_path))
+            img = img_as_float(scipy.misc.imread(full_path))
+            # print f, img.shape
         except IOError:
             print(BatchColors.FAIL + "Could not open file: ", full_path + BatchColors.ENDC)
             return
@@ -193,10 +159,10 @@ def load_images(path, specie_type, operation, crop_size):
         # print(memory_usage_psutil()))
         year, img_num, hour = f[:-4].split('_')
         if old_img_num != int(img_num):
-            # print('new day', f)
+            # print 'new day', f
             data.append(day)
-            # print('data', np.asarray(data).shape)
-            day = np.zeros((960 + mask * 2, 1280 + mask * 2, 3 * 13), dtype=np.float64)
+            # print 'data', np.asarray(data).shape
+            day = np.zeros((960 + mask * 2, 1280 + mask * 2, 3 * 13), dtype=np.float)
             old_img_num = int(img_num)
 
 
@@ -204,7 +170,7 @@ def load_images(path, specie_type, operation, crop_size):
         '''else:
         hour_5img = np.concatenate((hour_5img, img), axis=2)
         if int(stamp) == 5:
-            # print('new img', hour_5img.shape)
+            # print 'new img', hour_5img.shape
             day.append(hour_5img)
             hour_5img = []'''
 
@@ -212,13 +178,18 @@ def load_images(path, specie_type, operation, crop_size):
     data.append(day)
 
     try:
+        full_path = ""
         if operation == 'generate_pred_images':
-            img = io.imread(path + "masks_convnet/whole_mask_int.png")
-        else:
-            img = io.imread(path + "../masks_convnet/" + specie_type + "_mask_int.png")  # _balanced2
-            # img = io.imread(path + "masks_convnet/" + specie_type + "_mask_int_balanced.png")  # _balanced2
+            full_path = path + "masks_convnet/whole_mask_int.png"
+        
+        if operation != 'generate_pred_images' and specie_type == "all":
+            full_path = path + "../masks_convnet/" + "whole_mask_int_itirapina_v2.png"
+        
+        if operation != 'generate_pred_images' and specie_type != "all":
+            full_path = path + "../masks_convnet/" + specie_type + "_mask_int.png"
+        img = scipy.misc.imread(full_path)  # _balanced2
     except IOError:
-        print(BatchColors.FAIL + "Could not open file: " + path + "Mask/" + specie_type + "_mask_int.png" + BatchColors.ENDC)
+        print(BatchColors.FAIL + "Could not open file: " + full_path + BatchColors.ENDC)
         return
 
     mask = img
@@ -227,35 +198,40 @@ def load_images(path, specie_type, operation, crop_size):
 
 
 def create_distributions_over_pixel_classes(labels):
-    train_class_distribution = [[[] for i in range(0)] for i in range(NUM_CLASSES)]
-    test_class_distribution = [[[] for i in range(0)] for i in range(NUM_CLASSES)]
+    training_instances = [[[] for i in range(0)] for i in range(NUM_CLASSES)]
+    testing_instances = [[[] for i in range(0)] for i in range(NUM_CLASSES)]
+    no_classes_instances = []
 
     w, h = labels.shape
-
+    builtin_offset = 1
     for i in range(0, w):
         for j in range(0, h):
-            if labels[i, j] == 1:
-                train_class_distribution[labels[i, j]-1].append((i, j))
-            elif labels[i, j] == 2:
-                train_class_distribution[labels[i, j]-1].append((i, j))
-            elif labels[i, j] == 3:
-                test_class_distribution[labels[i, j]-2].append((i, j))
+            if labels[i, j] != 0:
+                # print(labels[i, j])
+                if labels[i, j] <= NUM_CLASSES:
+                    # print('computed index ', labels[i, j] - builtin_offset)
+                    training_instances[labels[i, j] - builtin_offset].append((i, j))
+                else:
+                    # print('computed index ', labels[i, j] - NUM_CLASSES - builtin_offset)
+                    testing_instances[labels[i, j] - NUM_CLASSES - builtin_offset].append((i, j))
+            else:
+                no_classes_instances.append((i, j))
 
-    for i in range(len(train_class_distribution)):
-        print(BatchColors.OKBLUE + "Class " + str(i) + " = " + str(len(train_class_distribution[i])) + BatchColors.ENDC)
-    for i in range(len(test_class_distribution)):
-        print(BatchColors.OKBLUE + "Class " + str(i) + " = " + str(len(test_class_distribution[i])) + BatchColors.ENDC)
+    for i in range(len(training_instances)):
+        print(BatchColors.OKBLUE + "Training class " + str(i) + " = " + str(len(training_instances[i])) + BatchColors.ENDC)
+        print(BatchColors.OKBLUE + "Testing class " + str(i) + " = " + str(len(testing_instances[i])) + BatchColors.ENDC)
+    print(BatchColors.OKBLUE + 'No class = ' + str(len(no_classes_instances)) + BatchColors.ENDC)
 
-    return np.asarray(train_class_distribution[0] + train_class_distribution[1]), \
-           np.asarray(test_class_distribution[0] + test_class_distribution[1])
-
+    # Dynamically concatenate all classes based on NUM_CLASSES
+    train_data = np.asarray(sum(training_instances[:NUM_CLASSES], []))
+    test_data = np.asarray(sum(testing_instances[:NUM_CLASSES], []))
+    return train_data, test_data, no_classes_instances
 
 def dynamically_create_patches(data, mask_data, crop_size, class_distribution, shuffle):
     mask = int(crop_size / 2)
 
     patches = []
     classes = []
-
     for i in shuffle:
         if i >= 2 * len(class_distribution):
             cur_pos = i - 2 * len(class_distribution)
@@ -270,13 +246,19 @@ def dynamically_create_patches(data, mask_data, crop_size, class_distribution, s
         patch = data[:, (cur_x + mask) - mask:(cur_x + mask) + mask + 1,
                      (cur_y + mask) - mask:(cur_y + mask) + mask + 1, :]
 
-        current_class = (mask_data[cur_x, cur_y]-1 if (mask_data[cur_x, cur_y] == 1 or mask_data[cur_x, cur_y] == 2)
-                         else mask_data[cur_x, cur_y]-2)
+        current_class = mask_data[cur_x, cur_y] - 1
+        if current_class > NUM_CLASSES - 1:
+            current_class = current_class - NUM_CLASSES
+
+        if current_class == 6: 
+            print("original current class ", mask_data[cur_x, cur_y])
+            print("NUM_CLASSES - 1 ", NUM_CLASSES - 1)
+            print("current_class ", current_class)
 
         if len(patch[0]) != crop_size or len(patch[1]) != crop_size:
             print("Error: Current patch size ", len(patch), len(patch[0]))
             return
-        if current_class != 0 and current_class != 1 and current_class != 2 and current_class != 3 and current_class != 4:
+        if current_class > NUM_CLASSES:
             print("Error: Current class is mistaken", current_class)
             return
 
@@ -288,7 +270,7 @@ def dynamically_create_patches(data, mask_data, crop_size, class_distribution, s
             patches.append(np.flipud(patch))
 
         classes.append(current_class)
-
+    
     return np.swapaxes(np.asarray(patches), 0, 1), np.asarray(classes, dtype=np.int32)
 
 
@@ -325,9 +307,10 @@ def _variable_with_weight_decay(name, shape, ini, weight_decay):
 def _batch_norm(input_data, is_training, scope=None):
     # Note: is_training is tf.placeholder(tf.bool) type
     return tf.cond(is_training,
-                   lambda: tf.compat.v1.layers.batch_normalization(input_data, training=True, center=False,
-                                                        name=scope),
-                   lambda: tf.compat.v1.layers.batch_normalization(input_data, training=False, center=False, name=scope, reuse=True)
+                   lambda: tf.contrib.layers.batch_norm(input_data, is_training=True, center=False, updates_collections=None,
+                                                        scope=scope),
+                   lambda: tf.contrib.layers.batch_norm(input_data, is_training=False, center=False,
+                                                        updates_collections=None, scope=scope, reuse=True)
                    )
 
 
@@ -337,7 +320,7 @@ def _conv_layer(input_data, layer_shape, name, weight_decay, is_training, rate=1
         strides = [1, 1, 1, 1]
     with tf.variable_scope(name) as scope:
         weights = _variable_with_weight_decay('weights', shape=layer_shape,
-                                              ini=tf.keras.initializers.GlorotUniform(),
+                                              ini=tf.contrib.layers.xavier_initializer_conv2d(dtype=tf.float32),
                                               weight_decay=weight_decay)
         biases = _variable_on_cpu('biases', layer_shape[-1], tf.constant_initializer(0.1))
 
@@ -404,7 +387,7 @@ def convnet_25_temporal(x, dropout, is_training, crop_size, weight_decay, inputs
     with tf.variable_scope('ft_fc1') as scope:
         reshape = tf.reshape(pool3, [-1, 1 * 1 * 256])
         weights = _variable_with_weight_decay('weights', shape=[1 * 1 * 256, 1024],
-                                              ini=tf.keras.initializers.GlorotUniform(),
+                                              ini=tf.contrib.layers.xavier_initializer(dtype=tf.float32),
                                               weight_decay=weight_decay)
         biases = _variable_on_cpu('biases', [1024], tf.constant_initializer(0.1))
         drop_fc1 = tf.nn.dropout(reshape, dropout)
@@ -413,7 +396,7 @@ def convnet_25_temporal(x, dropout, is_training, crop_size, weight_decay, inputs
     # Fully connected layer 2
     with tf.variable_scope('ft_fc2') as scope:
         weights = _variable_with_weight_decay('weights', shape=[1024, 1024],
-                                              ini=tf.keras.initializers.GlorotUniform(),
+                                              ini=tf.contrib.layers.xavier_initializer(dtype=tf.float32),
                                               weight_decay=weight_decay)
         biases = _variable_on_cpu('biases', [1024], tf.constant_initializer(0.1))
 
@@ -423,7 +406,7 @@ def convnet_25_temporal(x, dropout, is_training, crop_size, weight_decay, inputs
 
     with tf.variable_scope('fc3_logits') as scope:
         weights = _variable_with_weight_decay('weights', [1024, NUM_CLASSES],
-                                              ini=tf.keras.initializers.GlorotUniform(),
+                                              ini=tf.contrib.layers.xavier_initializer(dtype=tf.float32),
                                               weight_decay=weight_decay)
         biases = _variable_on_cpu('biases', [NUM_CLASSES], tf.constant_initializer(0.1))
         logits = tf.add(tf.matmul(fc2, weights), biases, name=scope.name)
@@ -667,23 +650,25 @@ def main(input_path,
          crop_size,
          specie_type, operation ):
 
-    print( BatchColors.OKBLUE + 'Reading images...' + BatchColors.ENDC)
-    data, labels = load_images(input_path, specie_type, operation, crop_size)
-    print( data.shape, labels.shape)
+    lr_initial = learning_rate
 
-    print( BatchColors.OKBLUE + 'Creating class distribution...' + BatchColors.ENDC)
-    train_class_distribution, test_class_distribution = create_distributions_over_pixel_classes(labels)
+    print(BatchColors.OKBLUE + 'Reading images...' + BatchColors.ENDC)
+    data, labels = load_images(input_path, specie_type, operation, crop_size)
+    print(data.shape, labels.shape)
+
+    print(BatchColors.OKBLUE + 'Creating class distribution...' + BatchColors.ENDC)
+    train_class_distribution, test_class_distribution, no_class_set = create_distributions_over_pixel_classes(labels)
 
     if os.path.isfile(output_path + 'mean.npy'):
         mean_full = np.squeeze(np.load(output_path + 'mean.npy'))
         std_full = np.squeeze(np.load(output_path + 'std.npy'))
-        print( BatchColors.OKGREEN + 'Loaded Mean/Std from training instances' + BatchColors.ENDC)
+        print(BatchColors.OKGREEN + 'Loaded Mean/Std from training instances' + BatchColors.ENDC)
     else:
         mean_full, std_full = calculate_mean_and_std(data, train_class_distribution, crop_size)
         np.save(output_path + 'mean.npy', mean_full)
         np.save(output_path + 'std.npy', std_full)
-        print( BatchColors.OKGREEN + 'Created Mean/Std from training instances' + BatchColors.ENDC)
-    print( mean_full.shape, std_full.shape)
+        print(BatchColors.OKGREEN + 'Created Mean/Std from training instances' + BatchColors.ENDC)
+    print(mean_full.shape, std_full.shape)
 
     # Network Parameters
     n_input_data = crop_size * crop_size * 13*3  # 13 timestamps * RGB
@@ -693,14 +678,10 @@ def main(input_path,
     # tf Graph input_data
     x = tf.placeholder(tf.float32, [data.shape[0], None, n_input_data], name='ph_data')
     y = tf.placeholder(tf.int32, [None], name='ph_labels')
-    # x = tf.placeholder(tf.float32, [data.shape[0], None, n_input_data], name='ph_data')
-    # y = tf.placeholder(tf.int32, [None], name='ph_labels')
 
-    # keep_prob = tf.placeholder(tf.float32)  # dropout (keep probability)
     keep_prob = tf.placeholder(tf.float32)  # dropout (keep probability)
     # keep_prob_connection = tf.placeholder(tf.float32)
     is_training = tf.placeholder(tf.bool, [], name='is_training')
-    # is_training = tf.placeholder(tf.bool, [], name='is_training')
     global_step = tf.Variable(0, name='global_step', trainable=False)
 
     # CONVNET
@@ -709,16 +690,12 @@ def main(input_path,
     # Define loss and optimizer
     loss = loss_def(logits, y)
 
-    lr = tf.train.exponential_decay(learning_rate, global_step, 50000, 0.1, staircase=True)
+    lr = tf.train.exponential_decay(lr_initial, global_step, 50000, 0.1, staircase=True)
 
     optimizer = tf.train.MomentumOptimizer(learning_rate=lr, momentum=0.9).minimize(loss, global_step=global_step)
 
-    print(logits.dtype)
-    print(logits.shape)
-    print(y.dtype)
-    print(y.shape)
     # Evaluate model
-    correct = tf.nn.in_top_k(predictions=logits, targets=y, k=1)
+    correct = tf.nn.in_top_k(logits, y, 1)
     acc_mean = tf.reduce_sum(tf.cast(correct, tf.int32))
     pred = tf.argmax(logits, 1)
 
@@ -737,4 +714,8 @@ def main(input_path,
                              crop_size, batch_size, model_path, x, y, keep_prob,
                              is_training, n_input_data, logits, output_path, specie_type)
     else:
-        print( BatchColors.FAIL + "Operation not found: " + operation + BatchColors.ENDC)
+        print(BatchColors.FAIL + "Operation not found: " + operation + BatchColors.ENDC)
+
+
+if __name__ == "__main__":
+    main()

@@ -453,11 +453,10 @@ def validate(sess, data, labels, test_distribution, crop_size, mean_full, std_fu
     cm_test = np.zeros((NUM_CLASSES, NUM_CLASSES), dtype=np.uint32)
     true_count = 0.0
 
-    total = len(test_distribution)
-
     index = np.arange(len(test_distribution))
 
-    for i in range(0, int(math.ceil((total / float(batch_size))))):
+    for i in range(0, (len(test_distribution) // batch_size if len(test_distribution) % batch_size == 0
+                                                            else (len(test_distribution) // batch_size) + 1)):
         batch = index[i * batch_size:min(i * batch_size + batch_size, len(test_distribution))]
         bx, by = dynamically_create_patches(data, labels, crop_size, test_distribution, batch)
         normalize_images(bx, mean_full, std_full)
@@ -632,9 +631,9 @@ def full_test(data, labels, non_classified_pixels_distribution, mean_full, std_f
         print(BatchColors.OKBLUE + 'Model restored from ' + model_path + BatchColors.ENDC)
         saver_restore.restore(sess, model_path)
 
-        for i in range(0, ((len(non_classified_pixels_distribution) / batch_size)
+        for i in range(0, ((len(non_classified_pixels_distribution) // batch_size)
                             if (len(non_classified_pixels_distribution) % batch_size) == 0
-                            else (len(non_classified_pixels_distribution) / batch_size) + 1)):
+                            else (len(non_classified_pixels_distribution) // batch_size) + 1)):
             batch = list_index[i * batch_size:min(i * batch_size + batch_size, len(non_classified_pixels_distribution))]
             b_x, _ = dynamically_create_patches(data, labels, crop_size, non_classified_pixels_distribution, batch)
             normalize_images(b_x, mean_full, std_full)
@@ -662,7 +661,7 @@ def full_test(data, labels, non_classified_pixels_distribution, mean_full, std_f
     np.save(output_path + 'map_labels', new_labels)
 
     create_prediction_map(output_path, new_labels, new_logits_map)
-    tf.compat.v1.reset_default_graph()
+    tf.reset_default_graph()
 
 
 def testing_per_map(data, labels, class_dist, instances, mean_full, std_full,
@@ -707,8 +706,8 @@ def testing_per_map(data, labels, class_dist, instances, mean_full, std_full,
             print('Map', instances[m])
             print(cur_data.shape)
 
-            for i in range(0, ((len(class_dist) / batch_size)
-                              if (len(class_dist) % batch_size) == 0 else (len(class_dist) / batch_size) + 1)):
+            for i in range(0, ((len(class_dist) // batch_size)
+                              if (len(class_dist) % batch_size) == 0 else (len(class_dist) // batch_size) + 1)):
                 batch = list_index[i * batch_size:min(i * batch_size + batch_size, len(class_dist))]
                 b_x, by = dynamically_create_patches(cur_data, labels, crop_size, class_dist, batch)
                 normalize_images(b_x, mean_full, std_full)
@@ -725,7 +724,7 @@ def testing_per_map(data, labels, class_dist, instances, mean_full, std_full,
                 np.save(os.path.join(os.getcwd(), 'test_all_gts'), all_gts)
                 first = False
 
-    tf.compat.v1.reset_default_graph()
+    tf.reset_default_graph()
 
 
 def testing(data, labels, test_distribution, mean_full, std_full,
@@ -761,7 +760,7 @@ def testing(data, labels, test_distribution, mean_full, std_full,
         validate(sess, data, labels, test_distribution, crop_size, mean_full, std_full,
                  n_input_data, batch_size, x, y, keep_prob, is_training, pred, acc_mean, current_iter)
 
-    tf.compat.v1.reset_default_graph()
+    tf.reset_default_graph()
 
 
 '''

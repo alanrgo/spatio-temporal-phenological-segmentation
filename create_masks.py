@@ -58,7 +58,7 @@ def create_mask_one_vs_all(specie, width, height, test_dict):
     file_name = data['data'][pixel]['file_name']
     is_test = file_name in test_dict
     # verificar pelo nome do arquivo
-    print(class_name, file_name)
+    # print(class_name, file_name)
     if class_name == specie and not is_test:
       mask[i, j] = 1
     elif class_name != specie and not is_test:
@@ -79,7 +79,11 @@ def create_multi_class_mask(width, height, test_dict, n_class):
     is_test = file_name in test_dict
 
     if class_id not in dict_class_mask:
-      dict_class_mask[class_id] = class_name
+      dict_class_mask[class_id] = {
+        "class_name": class_name,
+        "train_id": class_id + 1,
+        "test_id": class_id + 1 + n_class
+      }
 
     class_offset = 0 if not is_test else n_class
     mask[i, j] = class_id + 1 + class_offset
@@ -103,7 +107,9 @@ dict_test_masks_v2 = {
   "A.tomentosum_11.pgm": 1,
   "A.tomentosum_7.pgm": 1,
   "M.rubiginosa_34.pgm": 1,
+  "C.brasiliensis_23.pgm": 1,
   "M.rubiginosa_4.pgm:": 1,
+  "M.guianensis_21.pgm": 1,
   "P.torta_9.pgm": 1,
   "P.ramiflora_10.pgm": 1
 }
@@ -154,7 +160,7 @@ generate_and_save_mask(rubiginosa_specie, dict_test_masks_v2)
 # analyse_whole_mask(output_path, filename)
 
 output_path = '/home/alangomes/data/Itirapina/Itirapina/v2'
-# filename = "whole_mask_int_itirapina_v2"
-filename = "A.tomentosum_mask_int"
-# generate_and_save_multi_class_mask(output_path, filename, dict_test_masks_v2)
+filename = "whole_mask_int_itirapina_v2"
+# filename = "A.tomentosum_mask_int"
+generate_and_save_multi_class_mask(output_path, filename, dict_test_masks_v2)
 analyse_whole_mask(output_path, filename)

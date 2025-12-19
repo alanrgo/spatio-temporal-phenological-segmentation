@@ -183,6 +183,7 @@ def load_images(path, specie_type, operation, crop_size):
     old_img_num = 242
 
     for f in sorted(listdir(path + "images")):
+        print(f)
         try:
             img = img_as_float(io.imread(os.path.join(path,'images', f)))
             # print(f, img.shape)
