@@ -1,0 +1,1 @@
+python3 ./vit_experiments/evaluate_model_gflops.py --dataset itirapina_v2 --setup_path vit_experiments/setups/itirapina/v2

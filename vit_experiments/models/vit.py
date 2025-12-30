@@ -21,7 +21,7 @@ class PatchEmbedding(nn.Module):
         if self.has_pos_encoding:
           self.pos_embed = nn.Parameter(torch.randn(1, 1 + dim_1, embed_dim))
         else:
-          self.pos_embed = torch.zeros((1, 1 + dim_1, embed_dim), device='cuda')
+          self.pos_embed = torch.zeros((1, 1 + dim_1, embed_dim), device='cpu')
 
     def forward(self, x):
         B = x.size(0)
