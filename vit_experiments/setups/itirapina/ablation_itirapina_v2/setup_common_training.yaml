@@ -1,0 +1,21 @@
+training: 
+  seq_len: 37
+  num_classes: 6
+
+masks:
+  - "A.tomentosum_11.pgm"
+  - "A.tomentosum_7.pgm"
+  - "M.rubiginosa_34.pgm"
+  - "C.brasiliensis_23.pgm"
+  - "M.rubiginosa_4.pgm"
+  - "M.guianensis_21.pgm"
+  - "P.torta_9.pgm"
+  - "P.ramiflora_10.pgm"
+
+classes:
+  - "A.tomentosum"
+  - "C.brasiliensis"
+  - "M.guianensis"
+  - "M.rubiginosa"
+  - "P.ramiflora"
+  - "P.torta"

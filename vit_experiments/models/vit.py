@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 
 class PatchEmbedding(nn.Module):
-    def __init__(self, feature_dim, seq_len, in_channels, embed_dim, arrgmnt = 'rgbrgb', region_size = 5, dimension_order = 'TR', normalized_rgb = False):
+    def __init__(self, feature_dim, seq_len, in_channels, embed_dim, arrgmnt = 'rgbrgb', region_size = 5, dimension_order = 'TR', normalized_rgb = False, has_pos_encoding = True):
         super().__init__()
         self.seq_len = seq_len
         self.dimension_order = dimension_order
@@ -15,9 +15,13 @@ class PatchEmbedding(nn.Module):
         self.dimension_order = dimension_order
         self.proj = nn.Linear(feature_dim, embed_dim)
         self.cls_token = nn.Parameter(torch.randn(1, 1, embed_dim))
-
+        self.has_pos_encoding = has_pos_encoding
         dim_1 = self.seq_len if self.dimension_order == 'TR' else self.region_size
-        self.pos_embed = nn.Parameter(torch.randn(1, 1 + dim_1, embed_dim))
+
+        if self.has_pos_encoding:
+          self.pos_embed = nn.Parameter(torch.randn(1, 1 + dim_1, embed_dim))
+        else:
+          self.pos_embed = torch.zeros((1, 1 + dim_1, embed_dim), device='cuda')
 
     def forward(self, x):
         B = x.size(0)
@@ -51,8 +55,11 @@ class PatchEmbedding(nn.Module):
 
     def filter_region(self, x):
       region_5_filter = torch.tensor([1, 3, 4, 5, 7])
+      region_1_filter = torch.tensor([4])
       if self.region_size == 5:
         x = x[:, :, region_5_filter, :]
+      if self.region_size == 1:
+         x = x[:, :, region_1_filter, :]
       return x
 
     def define_dimension_order(self, x):
@@ -99,9 +106,10 @@ class TransformerEncoderLayer(nn.Module):
         return x
     
 class VisionTransformer(nn.Module):
-    def __init__(self, feature_dim, seq_len, in_channels, num_classes, embed_dim, depth, num_heads, mlp_dim, drop_rate, region_size, feat_arrgmnt, data_structure, normalized_rgb):
+    def __init__(self, feature_dim, seq_len, in_channels, num_classes, embed_dim, depth, num_heads, mlp_dim, drop_rate, region_size, feat_arrgmnt, data_structure, normalized_rgb, has_pos_encoding, pool_type='cls'):
         super().__init__()
-        self.patch_embed = PatchEmbedding(feature_dim, seq_len, in_channels, embed_dim, feat_arrgmnt, region_size, data_structure, normalized_rgb)
+        self.pool_type = pool_type  # 'cls' for class token or 'gap' for global average pooling
+        self.patch_embed = PatchEmbedding(feature_dim, seq_len, in_channels, embed_dim, feat_arrgmnt, region_size, data_structure, normalized_rgb, has_pos_encoding)
         self.encoder = nn.Sequential(*[
             TransformerEncoderLayer(embed_dim, num_heads, mlp_dim, drop_rate)
             for _ in range(depth)
@@ -113,5 +121,14 @@ class VisionTransformer(nn.Module):
         x = self.patch_embed(x)
         x = self.encoder(x)
         x = self.norm(x)
-        cls_token = x[:, 0]
-        return self.head(cls_token)
+        
+        if self.pool_type == 'cls':
+            # Use class token (index 0)
+            x = x[:, 0]
+        elif self.pool_type == 'gap':
+            # Global average pooling over all tokens
+            x = x.mean(dim=1)
+        else:
+            raise ValueError(f"Unknown pooling type: {self.pool_type}")
+        
+        return self.head(x)

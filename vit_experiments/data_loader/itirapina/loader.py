@@ -37,6 +37,7 @@ def load_itirapina_data(data, dict_class_to_index, dict_test_masks):
     # "P.ramiflora_8.pgm" 1,
     }
 
+    debug_masks = {}
     for pixel_position in data['data']:
         numbers_str = pixel_position.strip('()').split(',')
         number1 = int(numbers_str[0])
@@ -45,8 +46,15 @@ def load_itirapina_data(data, dict_class_to_index, dict_test_masks):
         any_hour = '06'
 
         should_ignore = True if data['data'][pixel_position]['file_name'] in dict_mask_ignore else False
+        should_ignore = should_ignore or data['data'][pixel_position]['class_name'] == 'no_class'
         is_test_data = True if data['data'][pixel_position]['file_name'] in dict_test_masks else False
-
+        
+        file_name = data['data'][pixel_position]['file_name']
+        if file_name not in debug_masks:
+            print(file_name, "is test: ", is_test_data)
+            debug_masks[file_name] = 0
+        else:
+            debug_masks[file_name] += 1
         if should_ignore:
             continue
         time_serie_size = len(data['data'][pixel_position]['hours'][any_hour])
@@ -89,9 +97,9 @@ def load_itirapina_data(data, dict_class_to_index, dict_test_masks):
                     hour_key = str(hour_key).zfill(2)
                     rgb_str = data['data'][pixel_key]['hours'][hour_key][time_serie_index]
                     numbers_str = rgb_str.strip('[]').split(',') # Remove brackets and split by comma
-                    array_result = torch.tensor([int(num) for num in numbers_str]) # Convert to integers and then to a NumPy array
+                    array_result = torch.tensor([int(num) for num in numbers_str], dtype=torch.float32) # Convert to float tensor
                 else:
-                    array_result = torch.zeros((3,)) # Corrected to a 1D tensor of size 3
+                    array_result = torch.zeros((3,), dtype=torch.float32) # Corrected to a 1D tensor of size 3
                 time_serie_pixels.append(array_result)
             time_serie_pixels = torch.stack(time_serie_pixels)
             pixels.append(time_serie_pixels)
@@ -99,10 +107,10 @@ def load_itirapina_data(data, dict_class_to_index, dict_test_masks):
         pixels = torch.stack(pixels)
         if not is_test_data:
             full_data.append(pixels)
-            Y.append(torch.tensor(dict_class_to_index[data['data'][pixel_position]['class_name']])) # Convert integer to tensor
+            Y.append(torch.tensor(dict_class_to_index[data['data'][pixel_position]['class_name']], dtype=torch.long)) # Convert integer to long tensor for labels
         else:
             full_data_test.append(pixels)
-            Y_test.append(torch.tensor(dict_class_to_index[data['data'][pixel_position]['class_name']])) # Convert integer to tensor
+            Y_test.append(torch.tensor(dict_class_to_index[data['data'][pixel_position]['class_name']], dtype=torch.long)) # Convert integer to long tensor for labels
 
 
     full_data = torch.stack(full_data)
@@ -119,9 +127,8 @@ def load_itirapina_data(data, dict_class_to_index, dict_test_masks):
     )
 
     # Converte de volta para tensores
-    X_train = torch.tensor(X_train, dtype=full_data.dtype)
-    X_val = torch.tensor(X_val, dtype=full_data.dtype)
-    Y_train = torch.tensor(Y_train, dtype=Y.dtype)
-    Y_val = torch.tensor(Y_val, dtype=Y.dtype)
-    
+    X_train = torch.tensor(X_train, dtype=torch.float32)
+    X_val = torch.tensor(X_val, dtype=torch.float32)
+    Y_train = torch.tensor(Y_train, dtype=torch.long)
+    Y_val = torch.tensor(Y_val, dtype=torch.long)
     return X_train, X_val, Y_train, Y_val, full_data_test, Y_test

@@ -4,17 +4,18 @@ import json
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
 
-def load_raw_data(path = None):
+def load_raw_data(path = None, data_custom = None):
   PATH_TO_READ_FILE = path
+  data_custom = 'data.txt' if data_custom is None else data_custom
 
   # Define the file path in your Google Drive
-  output_file = os.path.join(PATH_TO_READ_FILE, 'data.txt')
+  output_file = os.path.join(PATH_TO_READ_FILE, data_custom)
 
   # Read the JSON file
   with open(output_file, 'r') as f:
       data = json.load(f)
 
-  print("Data loaded successfully")
+  print("Data loaded successfully from: ", output_file)
   return data
 
 def load_sc_data(data):
@@ -22,12 +23,14 @@ def load_sc_data(data):
   Y = []
 
   for pixel_position in data['data']['train']:
+    if data['data']['train'][pixel_position]['class'] == -1:
+      continue
     numbers_str = pixel_position.strip('()').split(',')
     number1 = int(numbers_str[0])
     number2 = int(numbers_str[1])
 
     time_serie_size = len(data['data']['train'][pixel_position]['timeserie'])
-
+    # print(data['data']['train'][pixel_position])
     # Upper pixels
     upper_left = (number1 - 1, number2 - 1)
     upper = (number1 - 1, number2)
@@ -56,23 +59,25 @@ def load_sc_data(data):
     ]
 
     pixels = []
+    # print('time_serie_size', time_serie_size)
     for time_serie_index in range(time_serie_size):
       time_serie_pixels = []
       for pixel in region:
         pixel_key = f'({pixel[0]},{pixel[1]})'
         if pixel_key in data['data']['train']:
+          # print(data['data']['train'][pixel_key])
           rgb_str = data['data']['train'][pixel_key]['rgbs'][time_serie_index]
           numbers_str = rgb_str.strip('[]').split() # Remove brackets and split by spaces
-          array_result = torch.tensor([int(num) for num in numbers_str]) # Convert to integers and then to a NumPy array
+          array_result = torch.tensor([int(num) for num in numbers_str], dtype=torch.float32) # Convert to float tensor
         else:
-          array_result = torch.zeros((3,)) # Corrected to a 1D tensor of size 3
+          array_result = torch.zeros((3,), dtype=torch.float32) # Corrected to a 1D tensor of size 3
         time_serie_pixels.append(array_result)
       time_serie_pixels = torch.stack(time_serie_pixels)
       pixels.append(time_serie_pixels)
 
     pixels = torch.stack(pixels)
     full_data.append(pixels)
-    Y.append(torch.tensor(int(data['data']['train'][pixel_position]['class']))) # Convert integer to tensor
+    Y.append(torch.tensor(int(data['data']['train'][pixel_position]['class']), dtype=torch.long)) # Labels as long tensor
 
   full_data = torch.stack(full_data)
   Y = torch.stack(Y)
@@ -87,7 +92,10 @@ def load_sc_data(data):
       "6": 0,
       "7": 3,
   }
+
   for pixel_position in data['data']['test']:
+    if data['data']['test'][pixel_position]['class'] == -1:
+      continue
     numbers_str = pixel_position.strip('()').split(',')
     number1 = int(numbers_str[0])
     number2 = int(numbers_str[1])
@@ -129,9 +137,9 @@ def load_sc_data(data):
         if pixel_key in data['data']['test']:
           rgb_str = data['data']['test'][pixel_key]['rgbs'][time_serie_index]
           numbers_str = rgb_str.strip('[]').split() # Remove brackets and split by spaces
-          array_result = torch.tensor([int(num) for num in numbers_str]) # Convert to integers and then to a NumPy array
+          array_result = torch.tensor([int(num) for num in numbers_str], dtype=torch.float32) # Convert to float tensor
         else:
-          array_result = torch.zeros((3,)) # Corrected to a 1D tensor of size 3
+          array_result = torch.zeros((3,), dtype=torch.float32) # Corrected to a 1D tensor of size 3
         time_serie_pixels.append(array_result)
       time_serie_pixels = torch.stack(time_serie_pixels)
       pixels.append(time_serie_pixels)
@@ -139,7 +147,7 @@ def load_sc_data(data):
     pixels = torch.stack(pixels)
     full_data_test.append(pixels)
     origin_class = str(data['data']['test'][pixel_position]['class'])
-    Y_test.append(torch.tensor(class_map[origin_class])) # Convert integer to tensor
+    Y_test.append(torch.tensor(class_map[origin_class], dtype=torch.long)) # Labels as long tensor
 
 
   full_data_test = torch.stack(full_data_test)
@@ -156,11 +164,11 @@ def load_sc_data(data):
       X_np, y_np, test_size=0.2, stratify=y_np, random_state=42
   )
 
-  # Converte de volta para tensores
-  X_train = torch.tensor(X_train, dtype=full_data.dtype)
-  X_val = torch.tensor(X_val, dtype=full_data.dtype)
-  Y_train = torch.tensor(Y_train, dtype=Y.dtype)
-  Y_val = torch.tensor(Y_val, dtype=Y.dtype)
+  # Converte de volta para tensores com dtypes corretos
+  X_train = torch.tensor(X_train, dtype=torch.float32)
+  X_val = torch.tensor(X_val, dtype=torch.float32)
+  Y_train = torch.tensor(Y_train, dtype=torch.long)
+  Y_val = torch.tensor(Y_val, dtype=torch.long)
 
   return X_train, Y_train, X_val, Y_val, full_data_test, Y_test
 

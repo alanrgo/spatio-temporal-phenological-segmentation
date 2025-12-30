@@ -23,6 +23,7 @@ parser.add_argument('--dataset', type=str,
 parser.add_argument('--input_path', type=str,
                     required=True,
                     help='path/to/input/files')
+parser.add_argument('--data_file', type=str, required=False, help='name_of_file')
 parser.add_argument('--setup_path', type=str,
                     required=True,
                     help='path/to/setups')
@@ -35,11 +36,12 @@ dataset = args.dataset
 input_path = args.input_path
 setup_path = args.setup_path
 output_path = args.output
+data_file = args.data_file
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Read data
-data = load_raw_data(input_path)
+data = load_raw_data(input_path, data_file)
 # Ler dicionario de classes de itirapina
 
 path = os.path.join(setup_path, 'setup_common_training.yaml')
@@ -53,6 +55,15 @@ masks_dict = {mask: 1 for _, mask in enumerate(masks)}
 
 X_train, X_val, Y_train, Y_val, X_test, Y_test = load_itirapina_data(data, dict_classes, masks_dict)
 train_loader, val_loader, test_loader  = create_loaders(X_train, Y_train, X_val, Y_val, X_test, Y_test)
+
+print("===== Shapes of training sets ====")
+print("X_train: ", X_train.shape)
+print("X_val: ", X_val.shape)
+print("Y_train: ", Y_train.shape)
+print("Y_val: ", Y_val.shape)
+print("X_test: ", X_test.shape)
+print("Y_test: ", Y_test.shape)
+print("===== Shapes of training sets ==== \n")
 
 setup_path = setup_path
 setup_list = sorted(os.listdir(setup_path))
@@ -82,6 +93,16 @@ for setup in setup_list:
     NORMALIZED_RGB = loaded_config['custom_setup']['normalized_rgb']
     CHANNELS = loaded_config['model']['channels']
 
+    if 'pos_encoding' in loaded_config['custom_setup']:
+        POS_ENCODING_ENABLED = loaded_config['custom_setup']['pos_encoding']
+    else:
+        POS_ENCODING_ENABLED = True
+
+    if 'aggregation' in loaded_config['custom_setup']:
+        POOL_TYPE = loaded_config['custom_setup']['aggregation']
+    else:
+        POOL_TYPE = 'cls'
+
     SEQ_LEN = loaded_config['training']['seq_len']
     EPOCHS = loaded_config['training']['epochs']
     FEATURE_DIM = REGION_SIZE * CHANNELS if SEQUENCE_ORDER == 'TR' else CHANNELS * SEQ_LEN
@@ -99,7 +120,7 @@ for setup in setup_list:
         FEATURE_DIM, SEQ_LEN, CHANNELS, NUM_CLASSES,
         EMBED_DIM, DEPTH, NUM_HEADS, MLP_DIM, DROP_RATE,
         REGION_SIZE, FEATURE_ARRANGEMENT, SEQUENCE_ORDER, 
-        NORMALIZED_RGB
+        NORMALIZED_RGB,  POS_ENCODING_ENABLED, POOL_TYPE
     ).to(device)
 
     # Loss and optimizer
@@ -203,17 +224,16 @@ for setup in setup_list:
     model.eval() # Set the model to evaluation mode
     print(f"Loaded best model weights from {best_model_test_path}")
 
-    output_path = os.path.join(output_path, EXPERIMENT_NAME)
+    folder_output_path = os.path.join(output_path, EXPERIMENT_NAME)
     generate_and_save_visualizations_itirapina(
         data, 
-        Y_test, 
+        dataset, 
         model, 
         test_loader, 
         device, 
         input_path, 
-        output_path,
+        folder_output_path,
         train_accuracies,
         test_accuracies,
         masks_dict 
     )
-    break

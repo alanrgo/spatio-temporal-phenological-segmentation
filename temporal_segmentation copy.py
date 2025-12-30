@@ -1,6 +1,7 @@
 import random
 import sys
 import os
+import skimage.io as io
 import math
 import datetime
 from PIL import Image
@@ -10,11 +11,38 @@ import scipy.misc
 from skimage import img_as_float
 from sklearn.metrics import f1_score
 from sklearn.model_selection import StratifiedShuffleSplit
+import skimage.io as io
+
+tf.compat.v1.disable_eager_execution()
+tf.compat.v1.disable_v2_behavior()
 
 # from tensorflow.python.framework import ops
+# Provide TF1-style aliases so code written against tf.* (TF1) works without
+# changing the entire codebase to tf.compat.v1.* everywhere.
+if not hasattr(tf, 'variable_scope'):
+    tf.variable_scope = tf.compat.v1.variable_scope
+if not hasattr(tf, 'get_variable'):
+    tf.get_variable = tf.compat.v1.get_variable
+if not hasattr(tf, 'Session'):
+    tf.Session = tf.compat.v1.Session
+if not hasattr(tf, 'placeholder'):
+    tf.placeholder = tf.compat.v1.placeholder
+
+# Add aliases for collection and train APIs used by the script so calls like
+# tf.add_to_collection, tf.get_collection, tf.train.Saver, etc. work.
+if not hasattr(tf, 'add_to_collection'):
+    tf.add_to_collection = tf.compat.v1.add_to_collection
+if not hasattr(tf, 'get_collection'):
+    tf.get_collection = tf.compat.v1.get_collection
+# Expose the v1 train module as tf.train so tf.train.Saver etc. resolve.
+tf.train = tf.compat.v1.train
+# initialize_all_variables / global_variables_initializer helpers
+if not hasattr(tf, 'initialize_all_variables'):
+    tf.initialize_all_variables = tf.compat.v1.initialize_all_variables
+if not hasattr(tf, 'global_variables_initializer'):
+    tf.global_variables_initializer = tf.compat.v1.global_variables_initializer
 
 NUM_CLASSES = 4
-
 
 class BatchColors:
     HEADER = '\033[95m'
@@ -53,7 +81,8 @@ def select_batch(shuffle, batch_size, it, total_size):
 
 def manipulate_border_array(data, crop_size):
     mask = int(crop_size / 2)
-    # print data.shape
+    print(data.shape)
+    print(mask)
 
     h, w = len(data), len(data[0])
     crop_left = data[0:h, 0:crop_size, :]
@@ -144,17 +173,17 @@ def calculate_mean_and_std(data, indexes, crop_size):
 def load_images(path,  crop_size, instances):
     data = []
     mask = []
-
     for name in instances:
         try:
-            img = img_as_float(scipy.misc.imread(os.path.join(path, name)))
+            print(os.path.join(path, name))
+            img = img_as_float(io.imread(os.path.join(path, name)))
         except IOError:
             print(BatchColors.FAIL + "Could not open file: ", path + name + BatchColors.ENDC)
 
         data.append(manipulate_border_array(img, crop_size))
 
     try:
-        img = scipy.misc.imread(os.path.join(path, "mask_train_test_int.png"))
+        img = io.imread(os.path.join(path, "mask_train_test_int.png"))
     except IOError:
         print(BatchColors.FAIL + "Could not open file: ", path + "mask_train_test_int.png" + BatchColors.ENDC)
 
@@ -300,10 +329,9 @@ def _variable_with_weight_decay(name, shape, ini, weight_decay):
 def _batch_norm(input_data, is_training, scope=None):
     # Note: is_training is tf.placeholder(tf.bool) type
     return tf.cond(is_training,
-                   lambda: tf.contrib.layers.batch_norm(input_data, is_training=True, center=False, updates_collections=None,
-                                                        scope=scope),
-                   lambda: tf.contrib.layers.batch_norm(input_data, is_training=False, center=False,
-                                                        updates_collections=None, scope=scope, reuse=True)
+                   lambda: tf.compat.v1.layers.batch_normalization(input_data, training=True, center=False,
+                                                        name=scope),
+                   lambda: tf.compat.v1.layers.batch_normalization(input_data, training=False, center=False, name=scope, reuse=True)
                    )
 
 
@@ -313,7 +341,7 @@ def _conv_layer(input_data, layer_shape, name, weight_decay, is_training, rate=1
         strides = [1, 1, 1, 1]
     with tf.variable_scope(name) as scope:
         weights = _variable_with_weight_decay('weights', shape=layer_shape,
-                                              ini=tf.contrib.layers.xavier_initializer_conv2d(dtype=tf.float32),
+                                              ini=tf.keras.initializers.GlorotUniform(),
                                               weight_decay=weight_decay)
         biases = _variable_on_cpu('biases', layer_shape[-1], tf.constant_initializer(0.1))
 
@@ -379,7 +407,7 @@ def convnet_25_temporal(x, dropout, is_training, crop_size, weight_decay):
     with tf.variable_scope('ft_fc1') as scope:
         reshape = tf.reshape(pool3, [-1, 1 * 1 * 256])
         weights = _variable_with_weight_decay('weights', shape=[1 * 1 * 256, 1024],
-                                              ini=tf.contrib.layers.xavier_initializer(dtype=tf.float32),
+                                              ini=tf.keras.initializers.GlorotUniform(),
                                               weight_decay=weight_decay)
         biases = _variable_on_cpu('biases', [1024], tf.constant_initializer(0.1))
         drop_fc1 = tf.nn.dropout(reshape, dropout)
@@ -388,7 +416,7 @@ def convnet_25_temporal(x, dropout, is_training, crop_size, weight_decay):
     # Fully connected layer 2
     with tf.variable_scope('ft_fc2') as scope:
         weights = _variable_with_weight_decay('weights', shape=[1024, 1024],
-                                              ini=tf.contrib.layers.xavier_initializer(dtype=tf.float32),
+                                              ini=tf.keras.initializers.GlorotUniform(),
                                               weight_decay=weight_decay)
         biases = _variable_on_cpu('biases', [1024], tf.constant_initializer(0.1))
 
@@ -398,7 +426,7 @@ def convnet_25_temporal(x, dropout, is_training, crop_size, weight_decay):
 
     with tf.variable_scope('fc3_logits') as scope:
         weights = _variable_with_weight_decay('weights', [1024, NUM_CLASSES],
-                                              ini=tf.contrib.layers.xavier_initializer(dtype=tf.float32),
+                                              ini=tf.keras.initializers.GlorotUniform(),
                                               weight_decay=weight_decay)
         biases = _variable_on_cpu('biases', [NUM_CLASSES], tf.constant_initializer(0.1))
         logits = tf.add(tf.matmul(fc2, weights), biases, name=scope.name)
@@ -478,7 +506,7 @@ def train(data, labels, training_distribution, test_distribution, mean_full, std
     init = tf.initialize_all_variables()
     shuffle = np.asarray(random.sample(range(3 * len(training_distribution)), 3 * len(training_distribution)))
 
-    tfconfig = tf.ConfigProto(allow_soft_placement=True)
+    tfconfig = tf.compat.v1.ConfigProto(allow_soft_placement=True)
     tfconfig.gpu_options.allow_growth = True
 
     # Launch the graph
@@ -603,9 +631,9 @@ def full_test(data, labels, non_classified_pixels_distribution, mean_full, std_f
         print(BatchColors.OKBLUE + 'Model restored from ' + model_path + BatchColors.ENDC)
         saver_restore.restore(sess, model_path)
 
-        for i in range(0, ((len(non_classified_pixels_distribution) / batch_size)
+        for i in range(0, ((len(non_classified_pixels_distribution) // batch_size)
                             if (len(non_classified_pixels_distribution) % batch_size) == 0
-                            else (len(non_classified_pixels_distribution) / batch_size) + 1)):
+                            else (len(non_classified_pixels_distribution) // batch_size) + 1)):
             batch = list_index[i * batch_size:min(i * batch_size + batch_size, len(non_classified_pixels_distribution))]
             b_x, _ = dynamically_create_patches(data, labels, crop_size, non_classified_pixels_distribution, batch)
             normalize_images(b_x, mean_full, std_full)
@@ -678,8 +706,8 @@ def testing_per_map(data, labels, class_dist, instances, mean_full, std_full,
             print('Map', instances[m])
             print(cur_data.shape)
 
-            for i in range(0, ((len(class_dist) / batch_size)
-                              if (len(class_dist) % batch_size) == 0 else (len(class_dist) / batch_size) + 1)):
+            for i in range(0, ((len(class_dist) // batch_size)
+                              if (len(class_dist) % batch_size) == 0 else (len(class_dist) // batch_size) + 1)):
                 batch = list_index[i * batch_size:min(i * batch_size + batch_size, len(class_dist))]
                 b_x, by = dynamically_create_patches(cur_data, labels, crop_size, class_dist, batch)
                 normalize_images(b_x, mean_full, std_full)
@@ -795,7 +823,7 @@ def main(
     optimizer = tf.train.MomentumOptimizer(learning_rate=lr, momentum=0.9).minimize(loss, global_step=global_step)
 
     # Evaluate model
-    correct = tf.nn.in_top_k(logits, y, 1)
+    correct = tf.nn.in_top_k(predictions=logits, targets=y, k=1)
     acc_mean = tf.reduce_sum(tf.cast(correct, tf.int32))
     pred = tf.argmax(logits, 1)
 
@@ -818,7 +846,3 @@ def main(
                   batch_size, crop_size, model_path, output_path)
     else:
         print(BatchColors.FAIL + "Operation not found: " + operation + BatchColors.ENDC)
-
-
-if __name__ == "__main__":
-    main()

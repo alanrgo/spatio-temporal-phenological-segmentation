@@ -1,10 +1,11 @@
-base: "../../setup_base_vit.yaml"
+base: "../setup_base_vit.yaml"
 extends: "setup_common_training.yaml"
 
-experiment_name: "adamw_no-norm-rgb_rgbrgb_5_TR"
+experiment_name: "adamw_norm-rgb_rgbrgb_5_RT_wout_posenc"
 custom_setup:
   arrangement: "rgbrgb"
   optimizer: "adamw"
   normalized_rgb: False
   region: 5
-  sequence_order: "TR"
+  sequence_order: "RT"
+  pos_encoding: False

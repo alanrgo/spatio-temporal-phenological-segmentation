@@ -150,11 +150,14 @@ def plot_training_accs_along_epochs(train_accuracies, val_accuracies, output_pat
 def create_pred_mask_itirapina(
         data, model, 
         input_path,
-        dict_test_mask, device
+        dict_test_mask, device, dataset='itirapinav2'
         ):
     # Assuming GOOGLE_DRIVE_PATH is defined and points to the image directory
     # Use one of the image files to get the dimensions
-    sample_image_file = os.path.join(input_path, 'raw', 'images', '1', '2011_242_13.jpg')
+    if dataset == 'itirapinav2':
+        sample_image_file = os.path.join(input_path, 'raw', 'images', '1', '2011_242_13.jpg')
+    else:
+        sample_image_file = os.path.join(input_path, 'raw', 'images', '2011_242_13_1.jpg')
 
     with rasterio.open(sample_image_file) as src:
         image_height = src.height
@@ -247,10 +250,13 @@ def create_pred_mask_itirapina(
         prediction_mask[number1][number2] = torch.tensor(class_id_to_color[pred], dtype=torch.uint8, device=device)
     return prediction_mask
 
-def overlay_mask_and_input_itirapina(input_path, prediction_mask, output_path):
+def overlay_mask_and_input_itirapina(input_path, prediction_mask, output_path, dataset = 'itirapinav2'):
     # Choose a reference image to overlay the mask on
     # Using the first image from crop_filenames as an example
-    reference_image_file = os.path.join(input_path, 'raw', 'images', '1', '2011_242_13.jpg')
+    if dataset == 'itirapinav2':
+        reference_image_file = os.path.join(input_path, 'raw', 'images', '1', '2011_242_13.jpg')
+    else:
+        reference_image_file = os.path.join(input_path, 'raw', 'images', '2011_242_13_1.jpg')
 
     # Load the reference image
     with rasterio.open(reference_image_file) as src:
@@ -300,7 +306,7 @@ def creates_confusion_matrix_itirapina(model, data, dataloader_test, output_path
     cm = confusion_matrix(all_labels, all_preds)
 
     # Normalize the confusion matrix to show percentages
-    cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+    cm_normalized = cm.astype('float') / (cm.sum(axis=1)[:, np.newaxis] + 1e-8)
 
     # Plotting the confusion matrix
     plt.figure(figsize=(10, 8))
@@ -317,7 +323,7 @@ def creates_confusion_matrix_itirapina(model, data, dataloader_test, output_path
 
 def generate_and_save_visualizations_itirapina(
         data, 
-        Y_test, 
+        dataset, 
         model, 
         test_dataloader, 
         device, 
@@ -330,6 +336,6 @@ def generate_and_save_visualizations_itirapina(
     plot_training_accs_along_epochs(train_accuracies, val_accuracies, output_path)
     pred_mask = create_pred_mask_itirapina(data, model, 
         input_path,
-        dict_test_mask, device)
-    overlay_mask_and_input_itirapina(input_path, pred_mask, output_path)
+        dict_test_mask, device, dataset)
+    overlay_mask_and_input_itirapina(input_path, pred_mask, output_path, dataset)
     creates_confusion_matrix_itirapina(model, data, test_dataloader, output_path, device)

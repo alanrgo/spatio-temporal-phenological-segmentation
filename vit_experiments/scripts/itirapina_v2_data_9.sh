@@ -1,0 +1,6 @@
+python3 ./vit_experiments/train_v2.py \
+ --dataset itirapinav2 \
+ --input_path /home/alangomes/data/Itirapina/Itirapina/v2 \
+ --output /home/alangomes/data/Itirapina/Itirapina/v2/output_vit_experiments \
+ --setup_path /home/alangomes/convnet-keiller/spatio-temporal-phenological-segmentation/vit_experiments/setups/itirapina/ablation_itirapina_v2 \
+ --data_file data_9.txt

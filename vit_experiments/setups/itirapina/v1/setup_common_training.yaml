@@ -3,4 +3,17 @@ training:
   num_classes: 6
 
 masks:
- - 
+  - mask_aspidosperma-2.bmp
+  - mask_aspidosperma-3.bmp
+  - mask_m.rubiginosa-2.bmp
+  - mask_m.rubiginosa-3.bmp
+  - mask_p.torta-2.bmp
+  - mask_pouteria-2.bmp
+
+classes:
+  - "aspidosperma"
+  - "caryocar"
+  - "guianensis"
+  - "m.rubiginosa"
+  - "pouteria"
+  - "p.torta"

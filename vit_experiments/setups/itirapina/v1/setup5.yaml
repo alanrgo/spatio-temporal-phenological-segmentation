@@ -1,4 +1,7 @@
 # setup5.yaml
+base: "../../setup_base_vit.yaml"
+extends: "setup_common_training.yaml"
+
 experiment_name: "adamw_no-norm-rgb_rrggbb_5_TR"
 custom_setup:
   arrangement: "rrggbb"
