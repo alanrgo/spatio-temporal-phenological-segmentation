@@ -1,13 +1,14 @@
-# setup7.yaml
 base: "../../setup_base_vit.yaml"
 extends: "setup_common_training.yaml"
 
-experiment_name: "adamw_no-norm-rgb_rgbrgb_9_TR_non-black_non-posenc"
+experiment_name: "damw_no-norm-rgb_rgbrgb_5_TR_gap"
 custom_setup:
   arrangement: "rgbrgb"
   optimizer: "adamw"
   normalized_rgb: False
-  region: 9
+  region: 5
   sequence_order: "TR"
-  pos_encoding: False
+  out_as_black: True
+  pos_encoding: True
+  aggregation: 'gap'
 

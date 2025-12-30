@@ -87,6 +87,15 @@ for setup in setup_list:
     if os.path.exists(folder_path):
         continue
 
+    if 'out_as_black' in loaded_config['custom_setup']:
+        OUT_AS_BLACK = loaded_config['custom_setup']['out_as_black']
+    else:
+        OUT_AS_BLACK = True
+    
+    if OUT_AS_BLACK and data_file == 'data_9.txt':
+        print("Wrong data file for ", setup)
+        continue
+
     REGION_SIZE = loaded_config['custom_setup']['region']
     SEQUENCE_ORDER = loaded_config['custom_setup']['sequence_order']
     FEATURE_ARRANGEMENT = loaded_config['custom_setup']['arrangement']
