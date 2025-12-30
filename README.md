@@ -45,3 +45,47 @@ Iter 20100 -- Time 21:37:01.896605 -- Training Minibatch: Loss= 0.028356 Absolut
 Iter 20150 -- Time 21:38:51.271946 -- Training Minibatch: Loss= 0.025895 Absolut Right Pred= 100 Overall Accuracy= 1.0000 Normalized Accuracy= 0.8333 Confusion Matrix= [[ 4  0  0  0  0  0] [ 0 33  0  0  0  0] [ 0  0  7  0  0  0] [ 0  0  0 34  0  0] [ 0  0  0  0 22  0] [ 0  0  0  0  0  0]]
 ```
 
+```
+#!/bin/bash
+
+ativo (Corrigindo o erro anterior)
+if [ -f "$HOME/miniconda3/bin/activate" ]; then
+    source "$HOME/miniconda3/bin/activate"
+else
+    echo "ERRO: Miniconda não encontrado. Verifique a instalação."
+    exit 1
+fi
+```
+
+# 2. Inicializa o conda para garantir (evita erro de CommandNotFound)
+conda init bash
+
+# 3. Remove ambiente antigo se existir (para começar limpo)
+conda env remove -n convnet_legacy -y 2>/dev/null
+
+# 4. Cria ambiente com Python 3.7 
+# (Python 3.7 é OBRIGATÓRIO para usar scipy 1.1.0 e TF 1.15)
+echo "--- Criando ambiente Python 3.7 ---"
+conda create -n convnet_legacy python=3.7 -y
+
+# 5. Ativa o ambiente
+source activate convnet_legacy
+
+# 6. Instalação via CONDA (Mais seguro para versões antigas)
+# Instalamos o tensorflow-gpu 1.15 do canal oficial ou nvidia
+echo "--- Instalando TensorFlow 1.15 e CUDA 10 ---"
+# O cudatoolkit 10.0 é necessário para o TF 1.15
+conda install -y tensorflow-gpu=1.15 cudatoolkit=10.0 -c anaconda
+
+# 7. Instala as dependências exatas do seu código via PIP
+echo "--- Instalando bibliotecas auxiliares antigas ---"
+pip install "numpy<1.19"
+# O scipy 1.1.0 é CRÍTICO para o seu código (tem o scipy.misc.imread)
+pip install "scipy==1.1.0"
+pip install "scikit-image<0.16"
+pip install "pillow<7.0.0"
+pip install scikit-learn==0.24.2
+pip install rasterio matplotlib easydict pyyaml protobuf==3.20.0
+
+echo "--- Verificando Instalação ---"
+python -c "import tensorflow as tf; print('Versão TF:', tf.__version__); print('GPU Disponível:', tf.test.is_gpu_available())"
